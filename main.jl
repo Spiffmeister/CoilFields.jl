@@ -40,9 +40,9 @@ CoilArray = [coil_fields.Coil(R,Z,J) for (R,Z,J) in zip(CoilRs,CoilZs,CoilJs)]
 
 """
 
-PlasmaRs = [3.5, 3.9]
-PlasmaZs = [0.5, 0.0]
-PlasmaJs = [-2.2e4, -1.8e4]
+PlasmaRs = [3.5]
+PlasmaZs = [0.0]
+PlasmaJs = [-4.2e4]
 
 PlasmaArray = [coil_fields.Coil(R,Z,J) for (R,Z,J) in zip(PlasmaRs,PlasmaZs,PlasmaJs)]
 
@@ -60,19 +60,88 @@ Z_plasma = [coil_fields.ψ(PlasmaArray,x,y) for x in X, y in Y]
 
 
 
-Z_full = Z_coils .+ Z_plasma
+ψ_field(r,z) = 5exp(-2(25(r-3)^2 + 5(z-0.0)^2))
 
 
 
 
 
-f = Figure(); axf = Axis(f[1,1])
-contour!(axf,X,Y,Z_full, levels=150)
+
+# function ψ_field(r,z)
+#     r_0, z_0 = (3.0,0.0)
+#     a_r, a_z = (1.0,1.0)
+#     α = 1
+#     ω = 2
+
+#     R = sqrt( a_r*(r-r_0-2π)^2 + a_z*(z-z_0-2π)^2 )
+
+#     return α*tanh(ω*R) + 1
+# end
+
+
+
+function f(r,z)
+
+    R = x
+    α = [10.0,10.0]     # Slope strength
+    R_0 = [-3.0, 0.0]   # Origin
+    w = [0.0, 0.0]      # Width
+
+    if R < 0
+        return 1 / (1 + exp(-α * (R - R_0 - w)))
+    else
+        return -1 / (1 + exp(-α * (R + R_0 + w))) + 1
+    end
+
+    
+end
+
+
+
+
+Z_full = 0Z_coils .- [ψ_field(x,y) for x in X, y in Y]
+
+
+# Z_full = Z_coils .+ Z_plasma
+
+
+contour_xy = [3.5,0.0]
+contour_value = coil_fields.ψ(CoilArray,contour_xy...)
+contour_trace = Contour.contour(X,Y,Z_full,contour_value)
+# contour_verts = hcat([[X[1],X[2]] for X in contour_trace.lines[3].vertices]...)
+
+
+
+
+
+
+
+
+
+f = Figure(); 
+axf = Axis(f[1,1])
+contour!(axf,X,Y,Z_full, levels=500)
+Colorbar(f[1,3],limits=(minimum(Z_full),maximum(Z_full)))
 scatter!(axf,CoilRs,CoilZs,color=:red)
-scatter!(axf,PlasmaRs,PlasmaZs,color=:black)
+# scatter!(axf,PlasmaRs,PlasmaZs,color=:black)
 
-xlims!(axf,2,5)
-ylims!(axf,-2,2)
+# scatter!(axf,contour_verts[1,:], contour_verts[2,:],color=:red)
+
+contour!(axf,X,Y,Z_full,levels=[-1e-8],color=:black)
+
+xlims!(axf,0.1,10)
+ylims!(axf,-5,5)
+
+
+colsize!(f.layout, 1, Relative(0.8))
+rowsize!(f.layout, 1, Relative(0.8))
+
+axf2 = Axis(f[2,1])
+lines!(axf2, X, ψ_field.(X,0.0))
+
+axf3 = Axis(f[1,2])
+lines!(axf3, Y, ψ_field.(3.0,Y))
+
 
 
 f
@@ -80,16 +149,27 @@ f
 
 
 
-plascoil1 = Observable(Point2f(PlasmaRs[1],PlasmaZs[1]))
+
+
+
+
+
+
+
+
+#=
+
+plascoil_position = Observable([Point2f(PlasmaRs[1],PlasmaZs[1])])
 # plascoil2 = Observable(Point2f(PlasmaRs[2],PlasmaZs[2]))
 
 
-# plascoil1 = Observable(Point2f[])
+# plascoil_position = Observable(Point2f[])
+
+
 
 
 f = Figure(); axf = Axis(f[1,1])
-contour!(axf,X,Y,Z_full, levels=150)
-scpls = scatter!(plascoil1, color=:black, markersize=10)
+scpls = scatter!(plascoil_position, color=:black, markersize=20)
 
 
 
@@ -97,16 +177,45 @@ on(events(f).mousebutton, priority=2) do event
     global dragging, idx
     if event.button == Mouse.left
         if event.action == Mouse.press
-            plt, i = pick_sorted(scpls, mouseposition_px(f), 10)
+            plt, i = pick(scpls, mouseposition_px(f), 10)
             dragging = plt == scpls
             idx = i
             @show i, dragging
             return Consume(dragging)
         elseif event.action == Mouse.release
+            
             dragging = false
             return Consume(false)
         end
     end
 end
 
+on(events(f).mouseposition, priority=2) do mp
+    if dragging
+        plascoil_position[][idx] = mouseposition(axf)
+        notify(plascoil_position)
+        return Consume(true)
+    end
+    return Consume(false)
+end
+
+
+
+Z_vals = lift(plascoil_position) do update
+    Z_coils .+ 
+        [coil_fields.ψ(coil_fields.Coil(Float64(plascoil_position.val[1][1]),
+            Float64(plascoil_position.val[1][2]),PlasmaArray[1].J), x,y) for x in X, y in Y]
+end
+
+
+contour!(axf,X,Y,Z_vals, levels=150)
+
+
+
 f
+=#
+
+
+
+
+

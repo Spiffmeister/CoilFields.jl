@@ -3,6 +3,9 @@ module coil_fields
 
 
 using SpecialFunctions: ellipk, ellipe
+using LinearAlgebra
+using Contour
+
 
 
 const μ₀ = 4π * 10^-7
@@ -134,6 +137,75 @@ end
 
 
 
+
+
+
+
+
+
+#= FLUX SURFACE FINDING =#
+
+# function find_flux_surface!(R,Z,field,coils;xlims=[-5.0,5.0],ylims=[-5.0,5.0])
+# end
+"""
+Finds a flux surface with a given value of ψ
+"""
+function find_flux_surface(R::TT,Z::TT,gridx,gridy,field::Matrix{TT},coils::Array{Coil{TT}}) where TT
+
+    local flux_surface
+
+    contour_value = coil_fields.ψ(coils,R,Z)
+    contour_trace = Contour.contour(gridx,gridy,field,contour_value)
+
+
+    # We want the periodic contour
+    for line in contour_trace.lines
+        if line.vertices[1] == line.vertices[end]
+            flux_surface = line
+            continue
+        end
+    end
+
+    flux_surface_verts = hcat([[X[1],X[2]] for X in flux_surface.vertices]...)
+
+    segment_lengths = [norm(flux_surface_verts[:,i+1] - flux_surface_verts[:,i]) for i in Base.OneTo(length(flux_surface.vertices)-1)]
+
+    curve_length = sum(segment_lengths)
+
+    t(i) = segment_lengths[i]/curve_length
+
+
+
+
+end
+
+
+struct Fourier{TT,MODES}
+    R_cosine    ::Vector{TT}
+    R_sine      ::Vector{TT}
+    Z_cosine    ::Vector{TT}
+    Z_sine      ::Vector{TT}
+    Fourier(m) = new{Float64,m}(zeros(Float64,m+1),zeros(Float64,m+1),zeros(Float64,m+1),zeros(Float64,m+1))
+end
+
+function fourier_flux_surface(flux_surface, number_of_modes, symmetric=true)
+
+    FSeries = Fourier(number_of_modes)
+
+    xlims = minimum(flux_surface[1,:]), maximum(flux_surface[1,:])
+    ylims = minimum(flux_surface[2,:]), maximum(flux_surface[2,:])
+    
+    FSeries.R_cosine[1] = +(xlims...) * 0.5
+    FSeries.R_cosine[2] = -(xlims...) * 0.4 #TODO: why do this scaling?
+    FSeries.Z_sine[2] = ylims[2]
+
+    for mode in Base.OneTo(number_of_modes)
+        FSeries.R_cosine
+        if symmetric
+        end
+    end
+
+end
 
 
 
