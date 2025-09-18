@@ -2,3 +2,11 @@ name = "CoilFields"
 uuid = "995d4d6b-9c7a-49f3-8fbe-7df0de3633c3"
 authors = ["Spiffmeister <robospiff@gmail.com>"]
 version = "0.1.0"
+
+[deps]
+Folds = "41a02a25-b8f0-4f67-bc48-60067656b558"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
+[compat]
+Folds = "0.2.10"
+LinearAlgebra = "1.11.0"
