@@ -2,14 +2,19 @@ module CoilFields
 
 using LinearAlgebra: norm, cross, dot
 using Base.Threads
-using Folds
+using OhMyThreads: tmap
+using DelimitedFiles: readdlm
 
-include("Fourier.jl")
+# include("Fourier.jl")
 include("coils.jl")
-
+include("ReadCoils.jl")
+include("FieldLines.jl")
 
 export Coil, CoilSet
 export Biot_Savart, Biot_Savart!
+export Biot_Savart_A, Biot_Savart_A!
 export CompactLinear
+export ReadCoilSet
+export FieldLine
 
 end # module CoilFields

@@ -7,7 +7,7 @@ import CoilFields
 
 npts = 10_000
 
-coil_points = [[cos(θ), sin(θ), 0.0] for θ in range(0.0,2π,npts)]
+coil_points = [[cos(θ), sin(θ), 0.0] for θ in range(0.0, 2π, npts)]
 
 J = 100.0
 
@@ -19,24 +19,27 @@ coil_points_s = SVector{3}.(coil_points)
 circular_coil_s = CoilFields.Coil(coil_points_s, J, npts)
 
 
-CoilFields.Biot_Savart(circular_coil, [0.0,0.0,0.0], CoilFields.CompactLinear)
+CoilFields.Biot_Savart(circular_coil, [0.0, 0.0, 0.0], CoilFields.CompactLinear)
 
 
-pts = [[0.0,0.0,z] for z in range(-1.0,1.0,1_000)];
+pts = [[0.0, 0.0, z] for z in range(-1.0, 1.0, 1_000)];
 B = [zeros(3) for _ in eachindex(pts)];
 
-CoilFields.Biot_Savart(circular_coil,pts,CoilFields.CompactLinear)
-CoilFields.Biot_Savart!(B,circular_coil,pts,CoilFields.CompactLinear)
+B = CoilFields.Biot_Savart(circular_coil, pts, CoilFields.CompactLinear)
+CoilFields.Biot_Savart!(B, circular_coil, pts, CoilFields.CompactLinear)
 
 
-using BenchmarkTools
+A = CoilFields.Biot_Savart_A(circular_coil, pts, CoilFields.CompactLinear)
 
-@benchmark CoilFields.Biot_Savart!($zeros(3),$circular_coil, $[0.0,0.0,0.0], $CoilFields.CompactLinear)
-@benchmark CoilFields.Biot_Savart($circular_coil_s, $[0.0,0.0,0.0], $CoilFields.CompactLinear)
-@benchmark CoilFields.Biot_Savart!($zeros(3),$circular_coil_s, $[0.0,0.0,0.0], $CoilFields.CompactLinear)
 
-@benchmark CoilFields.Biot_Savart($circular_coil_s,$pts,$CoilFields.CompactLinear)
-@benchmark CoilFields.Biot_Savart!($B,$circular_coil_s,$pts,$CoilFields.CompactLinear)
+# using BenchmarkTools
+
+# @benchmark CoilFields.Biot_Savart!($zeros(3),$circular_coil, $[0.0,0.0,0.0], $CoilFields.CompactLinear)
+# @benchmark CoilFields.Biot_Savart($circular_coil_s, $[0.0,0.0,0.0], $CoilFields.CompactLinear)
+# @benchmark CoilFields.Biot_Savart!($zeros(3),$circular_coil_s, $[0.0,0.0,0.0], $CoilFields.CompactLinear)
+
+# @benchmark CoilFields.Biot_Savart($circular_coil_s,$pts,$CoilFields.CompactLinear)
+# @benchmark CoilFields.Biot_Savart!($B,$circular_coil_s,$pts,$CoilFields.CompactLinear)
 
 
 # using Profile
@@ -52,4 +55,4 @@ using BenchmarkTools
 # @profview CoilFields.Biot_Savart!(B,circular_coil_s,pts,CoilFields.CompactLinear)
 
 
-circular_coil_axis_mod_B(z,R,J) = μ₀ * J * R^2 / (2*(z^2 + R^2)^(3/2))
+circular_coil_axis_mod_B(z, R, J) = μ₀ * J * R^2 / (2 * (z^2 + R^2)^(3 / 2))

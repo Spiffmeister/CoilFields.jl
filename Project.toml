@@ -4,9 +4,11 @@ authors = ["Spiffmeister <robospiff@gmail.com>"]
 version = "0.1.0"
 
 [deps]
-Folds = "41a02a25-b8f0-4f67-bc48-60067656b558"
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+OhMyThreads = "67456a42-1dca-4109-a031-0a68de7e3ad5"
 
 [compat]
-Folds = "0.2.10"
+DelimitedFiles = "1.9.1"
 LinearAlgebra = "1.11.0"
+OhMyThreads = "0.8.3"
