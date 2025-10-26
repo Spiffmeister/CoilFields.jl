@@ -16,10 +16,10 @@ function ReadCoilSet(filename; endcoil_delim="mod", skipstart=0, filelayout=["x"
             idx_endofcoil - idx_startofcoil + 1
         )
         push!(coils, coil)
-        idx_startofcoil = idx_endofcoil
+        idx_startofcoil = idx_endofcoil + 1
     end
 
     coilset = CoilSet([coils...])
 
-    return fread, coilset
+    return coilset
 end
