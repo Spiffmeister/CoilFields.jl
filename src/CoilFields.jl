@@ -7,6 +7,7 @@ using DelimitedFiles: readdlm
 
 # include("Fourier.jl")
 include("coils.jl")
+include("Fields.jl")
 include("ReadCoils.jl")
 include("FieldLines.jl")
 include("plotting.jl")

@@ -1,5 +1,5 @@
-using GLMakie
 using CoilFields
+using GLMakie
 
 
 coilset = ReadCoilSet("./test/coilset", skipstart=3)
