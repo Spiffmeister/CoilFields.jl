@@ -4,6 +4,7 @@ using LinearAlgebra: norm, cross, dot
 using Base.Threads
 using OhMyThreads: tmap
 using DelimitedFiles: readdlm
+using OrdinaryDiffEq: ODEProblem, solve, Tsit5, ContinuousCallback, EnsembleProblem, EnsembleThreads, remake
 
 # include("Fourier.jl")
 include("coils.jl")

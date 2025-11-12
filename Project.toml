@@ -7,6 +7,7 @@ version = "0.1.0"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 OhMyThreads = "67456a42-1dca-4109-a031-0a68de7e3ad5"
+OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 
 [weakdeps]
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
@@ -19,3 +20,4 @@ DelimitedFiles = "1.9.1"
 LinearAlgebra = "1.11.0"
 Makie = "0.24.6"
 OhMyThreads = "0.8.3"
+OrdinaryDiffEq = "6.103.0"
