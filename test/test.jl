@@ -56,3 +56,15 @@ A = CoilFields.Biot_Savart_A(circular_coil, pts, CoilFields.CompactLinear)
 
 
 circular_coil_axis_mod_B(z, R, J) = μ₀ * J * R^2 / (2 * (z^2 + R^2)^(3 / 2))
+
+
+
+
+function analytic_vector_potential()
+    val1 = z^2 + (R + ρ)^2
+    val2 = √(4 * R * ρ / val1)
+
+    √(val1) / (2 * R * ρ) * (
+        (1 - (2 * R * ρ) / val1)
+    )
+end
