@@ -63,11 +63,11 @@ function _write_coil_ascii(filename, coilset, header=nothing)
 
         # iterate over the coils. coilnumber is required for knowing when a new coil starts in the "standard" file format
         for (coilnumber, coil) in enumerate(coilset)
-            for (i,xyz) in enumerate(coil.Geometry)
+            for (i, xyz) in enumerate(coil.Geometry)
                 # The standard file format has J=0 at the last index and a 'COILNUMBER mod_PADDEDCOILNUMBER'
                 #   where PADDEDCOILNUMBER is just the COILNUMBER padded to the left with zeros so that it is
                 #   three characters long
-                if i \neq lastindex(coil.Geometry)
+                if i ≠ lastindex(coil.Geometry)
                     writedlm(io, [xyz, coil.J], '\t')
                 else
                     writedlm(io, [xyz, 0.0, "coilnumber mod_$(lpad(coilnumber,3,"0"))"], '\t')

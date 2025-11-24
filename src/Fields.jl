@@ -18,7 +18,7 @@ Evaluate the Biot Savart integral using the `CompactLinear` segments from
 Each segment is computed using the analytic form of the Biot Savart integral,
 ``\\int_0^1``
 """
-function Biot_Savart!(B::Vector{TT}, coil::Coil{TT,GEO}, X::Vector{TT}, ::evaluation{:CompactLinear}) where {TT,GEO<:AbstractVector{<:AbstractVector{TT}}}
+function Biot_Savart!(B, coil::Coil{TT,GEO}, X, ::evaluation{:CompactLinear}) where {TT,GEO<:AbstractVector{<:AbstractVector{TT}}}
     for I in 1:coil.length-1
         Rᵢ = coil.Geometry[I] - X
         Rᵢ₊₁ = coil.Geometry[I+1] - X
