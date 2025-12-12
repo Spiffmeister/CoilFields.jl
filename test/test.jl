@@ -1,8 +1,10 @@
-using Pkg
-Pkg.activate(".")
 using Revise
-import CoilFields
+using CoilFields
 
+using SpecialFunctions: ellipk, ellipe
+using LinearAlgebra
+
+import PhysicalConstants.CODATA2022: μ_0
 
 
 npts = 10_000
@@ -64,7 +66,13 @@ function analytic_vector_potential()
     val1 = z^2 + (R + ρ)^2
     val2 = √(4 * R * ρ / val1)
 
-    √(val1) / (2 * R * ρ) * (
-        (1 - (2 * R * ρ) / val1)
+    A = √(val1) / (2 * R * ρ) * (
+        (1 - (2 * R * ρ) / val1) * ellipk(val2) - ellipe(val2)
     )
+
+    A .= I * μ_0 / 2π * A
+
+    A_cartesian = norm(A) * []
+
+    return A
 end

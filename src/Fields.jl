@@ -41,10 +41,9 @@ function Biot_Savart_A!(A, coil::Coil{TT,GEO}, X, ::evaluation{:CompactLinear}) 
 
         Rᵢ = X - xᵢ
         Rᵢ₊₁ = X - xᵢ₊₁
-
         L = norm(xᵢ₊₁ - xᵢ)
 
-        ê = (xᵢ₊₁ - xᵢ) / L
+        ê = (Rᵢ₊₁ - Rᵢ) / L
 
         ϵ = L / (norm(xᵢ) + norm(xᵢ₊₁))
         A .+= ê * log((1 + ϵ) / (1 - ϵ))
