@@ -3,27 +3,26 @@ using CoilFields
 
 using SpecialFunctions: ellipk, ellipe
 using LinearAlgebra
+using StaticArrays
+
 
 import PhysicalConstants.CODATA2022: μ_0
 
 
+# Define a single magnetic coil
 npts = 10_000
 
-coil_points = [[cos(θ), sin(θ), 0.0] for θ in range(0.0, 2π, npts)]
+coil_points = Tuple(SVector(cos(θ), sin(θ), 0.0) for θ in range(0.0, 2π, npts))
 
 J = 100.0
-
 circular_coil = CoilFields.Coil(coil_points, J, npts)
 
-using StaticArrays
 
-coil_points_s = SVector{3}.(coil_points)
-circular_coil_s = CoilFields.Coil(coil_points_s, J, npts)
-
-
+# Single evaluation of the Boit-Savart at the coil origin
 CoilFields.Biot_Savart(circular_coil, [0.0, 0.0, 0.0], CoilFields.CompactLinear)
 
 
+# Define points along the z-axis
 pts = [[0.0, 0.0, z] for z in range(-1.0, 1.0, 1_000)];
 B = [zeros(3) for _ in eachindex(pts)];
 
@@ -57,7 +56,7 @@ A = CoilFields.Biot_Savart_A(circular_coil, pts, CoilFields.CompactLinear)
 # @profview CoilFields.Biot_Savart!(B,circular_coil_s,pts,CoilFields.CompactLinear)
 
 
-circular_coil_axis_mod_B(z, R, J) = μ₀ * J * R^2 / (2 * (z^2 + R^2)^(3 / 2))
+circular_coil_axis_mod_B(z, R, J) = μ_0 * J * R^2 / (2 * (z^2 + R^2)^(3 / 2))
 
 
 

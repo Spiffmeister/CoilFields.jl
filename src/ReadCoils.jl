@@ -23,7 +23,7 @@ function ReadCoilSet(filename; endcoil_delim="mod", skipstart=0, filelayout=["x"
     for i_coil in 1:ncoils
         idx_endofcoil = findnext(occursin.(endcoil_delim, fread[:, end]), idx_startofcoil + 1)
         coil = Coil(
-            [Float64.(row[1:3]) for row in eachrow(fread[idx_startofcoil:idx_endofcoil, :])],
+            Tuple(SVector{3}(Float64.(row[1:3])) for row in eachrow(fread[idx_startofcoil:idx_endofcoil, :])),
             fread[idx_startofcoil, 4],
             idx_endofcoil - idx_startofcoil + 1
         )
