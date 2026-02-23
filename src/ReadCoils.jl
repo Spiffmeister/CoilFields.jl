@@ -37,6 +37,22 @@ function ReadCoilSet(filename; endcoil_delim="mod", skipstart=0, filelayout=["x"
 end
 
 
+function _read_coils_quasr(quasrID)
+    quasr_address = "https://quasr.flatironinstitute.org/simsopt_serials/0122/"
+    quasrJSON = HTTP.get(
+        string(string(quasr_address, "serial"), string(quasrID, pad=7))
+    )
+    quasrstr = String(quasrJSON.body)
+    quasrdict = JSON.Parser.parse(quasrstr)
+end
+
+
+function _read_coils_mod()
+end
+
+
+
+
 function WriteCoilSet(filename, coilset; format=:hdf5, header=nothing)
 
     if format == :ascii

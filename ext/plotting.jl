@@ -32,7 +32,7 @@ Makie.preferred_axis_type(::PlotCoils) = LScene
 function Makie.plot!(input::PlotCoils{<:Tuple{<:CoilFields.CoilSet}})
     for coil in input[1][].Coils
         coil_pts = Makie.Point3f.(coil.Geometry)
-        Makie.lines!(input, coil_pts, color=input.color)
+        Makie.lines!(input, [coil_pts...], color=input.color)
     end
     input
 end

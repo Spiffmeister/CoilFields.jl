@@ -9,7 +9,20 @@ const CompactLinear = evaluation{:CompactLinear}()
 # const LinearCurviature = evaluation{:LinearCurviature}() ## TODO: Implement
 
 
+function Biot_Savart_CompactLinearSegment(pt1, pt2, X)
+    Rᵢ = pt1 .- X
+    Rᵢ₊₁ = pt2 .- X
+    rᵢ = norm(Rᵢ)
+    rᵢ₊₁ = norm(Rᵢ₊₁)
+    B = cross(Rᵢ, Rᵢ₊₁) * (rᵢ + rᵢ₊₁) / (rᵢ * rᵢ₊₁ * (rᵢ * rᵢ₊₁ + dot(Rᵢ, Rᵢ₊₁)))
+    return B
+end
 
+function Biot_Savart_CompactLinearSegment(coil::Coil, X)
+    B = mapreduce(i -> Biot_Savart_CompactLinearSegment(coil[i], coil[i+1], X), +, 1:coil.length-1)
+    B .*= (coil.J * μ₀ / 4π)
+    return B
+end
 
 
 """
@@ -18,7 +31,7 @@ Evaluate the Biot Savart integral using the `CompactLinear` segments from
 Each segment is computed using the analytic form of the Biot Savart integral,
 ``\\int_0^1``
 """
-function Biot_Savart!(B::Vector{TT}, coil::Coil{TT,GEO}, X, ::evaluation{:CompactLinear}) where {TT,GEO<:Tuple}
+function Biot_Savart!(B::Vector{TT}, coil::Coil{TT,GEO}, X::AbstractVector, ::evaluation{:CompactLinear}) where {TT,GEO<:Tuple}
     for I in 1:coil.length-1
         Rᵢ = coil.Geometry[I] .- X
         Rᵢ₊₁ = coil.Geometry[I+1] .- X

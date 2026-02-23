@@ -5,7 +5,10 @@ authors = ["Spiffmeister <robospiff@gmail.com>"]
 
 [deps]
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+NonlinearSolve = "8913a72c-1f9b-4ce2-8d82-65094dcecaec"
 OhMyThreads = "67456a42-1dca-4109-a031-0a68de7e3ad5"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
@@ -18,8 +21,11 @@ plotting = "Makie"
 
 [compat]
 DelimitedFiles = "1.9.1"
+HTTP = "1.10.19"
+JSON = "1.4.0"
 LinearAlgebra = "1.11.0"
 Makie = "0.24.6"
+NonlinearSolve = "4.15.0"
 OhMyThreads = "0.8.3"
 OrdinaryDiffEq = "6.103.0"
 StaticArrays = "1.9.17"
