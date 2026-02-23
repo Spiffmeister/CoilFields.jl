@@ -36,6 +36,7 @@ Note that this is equivalent to choosing the toroidal angle.
 The `mod2pi` is to shift the interval of arctan to [0,2π)
 """
 function poincare_event(u, t, integrator, ζ)
+    @show u[2] - u[1]
     abs(atan(u[2], u[1]) - ζ)
 end
 
@@ -44,7 +45,7 @@ function poincare_event_ζ_affect!(integrator) end
 
 
 """
-Construct a `PoincarePlane` at a given ζ₀∈[0,2π) assuming there is a toroidal angle
+Construct a `PoincarePlane` at a given ζ₀∈[0,2π) assuming there is a toroidal angle with intial points centred at `X₀` with a radius `r₀`
 currently only computes a single Poincare plane
 """
 function construct_poincare(coilset::CoilSet{TT}, X₀, r₀; ζ₀=zero(TT), N_traj=100, t_f=800, initial_region=nothing) where {TT}
@@ -71,19 +72,20 @@ function construct_poincare(coilset::CoilSet{TT}, X₀, r₀; ζ₀=zero(TT), N_
         remake(prob, u0=x₀[:, i])
     end
 
+
     cb = ContinuousCallback(poincare_event, poincare_event_ζ_affect!, save_positions=(true, false))
-
-
     # Construct the problem and solve the trajectories in parallel
-    ζ = (0.0, t_f / 2)
+    # ζ = (0.0, t_f / 2)
+    ζ = (0.0, t_f)
     P = ODEProblem((ẋ, x, p, t) -> field_line!(ẋ, t, x, p, coilset), x₀[:, 1], ζ)
     EP = EnsembleProblem(P, prob_func=prob_fn)
-    simf = solve(EP, Tsit5(), EnsembleThreads(), trajectories=N_traj, reltol=1e-10)
+    simf = solve(EP, Tsit5(), EnsembleThreads(), trajectories=N_traj, reltol=1e-10, save_everystep=false)
 
-    ζ = (0.0, -t_f / 2)
-    P = ODEProblem((ẋ, x, p, t) -> field_line!(ẋ, t, x, p, coilset), x₀[:, 1], ζ)
-    EP = EnsembleProblem(P, prob_func=prob_fn)
-    simb = solve(EP, Tsit5(), EnsembleThreads(), trajectories=N_traj, reltol=1e-10)
+    # cb = ContinuousCallback(poincare_event, poincare_event_ζ_affect!, save_positions=(true, false))
+    # ζ = (0.0, -t_f / 2)
+    # P = ODEProblem((ẋ, x, p, t) -> field_line!(ẋ, t, x, p, coilset), x₀[:, 1], ζ)
+    # EP = EnsembleProblem(P, prob_func=prob_fn)
+    # simb = solve(EP, Tsit5(), EnsembleThreads(), trajectories=N_traj, reltol=1e-10)
 
     # Need to loop though outputs and store plane intersecetions
     # we do not know how many plane intersections we have a-priori
@@ -95,10 +97,12 @@ function construct_poincare(coilset::CoilSet{TT}, X₀, r₀; ζ₀=zero(TT), N_
             push!(data, u)
         end
     end
-    for sim in simb.u
-        # n_pts += len(sim.t)-1 # remove initial point
-        push!(data, u[2:end])
-    end
+    # for sim in simb.u
+    #     for u in sim.u[2:end]
+    #         # n_pts += len(sim.t)-1 # remove initial point
+    #         push!(data, u)
+    #     end
+    # end
     poincare_data = PoincarePlane(data, ζ₀)
 
     return poincare_data

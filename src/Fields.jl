@@ -20,8 +20,8 @@ Each segment is computed using the analytic form of the Biot Savart integral,
 """
 function Biot_Savart!(B::Vector{TT}, coil::Coil{TT,GEO}, X, ::evaluation{:CompactLinear}) where {TT,GEO<:Tuple}
     for I in 1:coil.length-1
-        Rᵢ = coil.Geometry[I] - X
-        Rᵢ₊₁ = coil.Geometry[I+1] - X
+        Rᵢ = coil.Geometry[I] .- X
+        Rᵢ₊₁ = coil.Geometry[I+1] .- X
 
         rᵢ = norm(Rᵢ)
         rᵢ₊₁ = norm(Rᵢ₊₁)
