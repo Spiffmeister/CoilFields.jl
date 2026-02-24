@@ -12,7 +12,7 @@ using NonlinearSolve: NonlinearProblem, solve
 # include("Fourier.jl")
 include("coils.jl")
 include("Fields.jl")
-include("ReadCoils.jl")
+include("io_coils.jl")
 include("FieldLines.jl")
 include("utilities.jl")
 include("plotting.jl")

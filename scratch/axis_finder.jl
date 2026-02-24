@@ -1,10 +1,11 @@
+using Revise
 using CoilFields
 
 using NonlinearSolve
 using OrdinaryDiffEq
 using LinearAlgebra
 
-coilset = ReadCoilSet("./test/coilset", skipstart=3)
+coilset = ReadCoilSet("./test/coilset", :delim, skipstart=3)
 
 
 
@@ -44,7 +45,7 @@ Find the point ``X`` such that ``X - x=0`` where ``x`` is determined by followin
 """
 function axis_diff(X, coilset)
     fieldline = ODEProblem((ẋ, x, p, t) -> CoilFields.field_line!(ẋ, x, p, t, coilset), [X[1], 0.0, X[2]], (0.0, 800))
-    sol = solve(fieldline, callback=cb, save_everystep=false)
+    sol = solve(fieldline, Vern9(), callback=cb, save_everystep=false)
     x = sol.u[end]
     return [X[1] - x[1], X[2] - x[3]]
 end

@@ -58,11 +58,13 @@ function poincare_event_ζ_affect!(integrator) end
 
 
 
+
+
 """
 Construct a `PoincarePlane` at a given ζ₀∈[0,2π) assuming there is a toroidal angle with intial points centred at `X₀` with a radius `r₀`
 currently only computes a single Poincare plane
 """
-function construct_poincare(coilset::CoilSet{TT}, X₀, r₀; ζ₀=zero(TT), N_traj=100, t_f=800, initial_region=nothing) where {TT}
+function construct_poincare(coilset::CoilSet{TT}, X₀, r₀; ζ₀=zero(TT), N_traj=100, t_f=800, initial_region=nothing, integrator=Tsit5()) where {TT}
 
     # We will initialise about the point X₀
     x₀ = _initialise_fieldlines(X₀, r₀, N_traj)
@@ -77,18 +79,18 @@ function construct_poincare(coilset::CoilSet{TT}, X₀, r₀; ζ₀=zero(TT), N_
     end
 
 
-    cb = ContinuousCallback((u, t, ∫) -> poincare_event(u, t, ∫, ζ₀), poincare_event_ζ_affect!, save_positions=(true, false))
     # Construct the problem and solve the trajectories in parallel
+    cb = ContinuousCallback((u, t, ∫) -> poincare_event(u, t, ∫, ζ₀), poincare_event_ζ_affect!, save_positions=(true, false))
     ζ = (0.0, t_f / 2)
     P = ODEProblem((ẋ, x, p, t) -> field_line!(ẋ, x, p, t, coilset), x₀[:, 1], ζ)
     EP = EnsembleProblem(P, prob_func=prob_fn)
-    simf = solve(EP, Tsit5(), EnsembleThreads(), trajectories=N_traj, reltol=1e-10, callback=cb, save_everystep=false, save_start=false, save_end=false)
+    simf = solve(EP, integrator, EnsembleThreads(), trajectories=N_traj, reltol=1e-10, callback=cb, save_everystep=false, save_start=false, save_end=false)
 
     cb = ContinuousCallback((u, t, ∫) -> poincare_event(u, t, ∫, ζ₀), poincare_event_ζ_affect!, save_positions=(true, false))
     ζ = (0.0, -t_f / 2)
     P = ODEProblem((ẋ, x, p, t) -> field_line!(ẋ, x, p, t, coilset), x₀[:, 1], ζ)
     EP = EnsembleProblem(P, prob_func=prob_fn)
-    simb = solve(EP, Tsit5(), EnsembleThreads(), trajectories=N_traj, reltol=1e-10, save_everystep=false, save_start=false, save_end=false)
+    simb = solve(EP, integrator, EnsembleThreads(), trajectories=N_traj, reltol=1e-10, save_everystep=false, save_start=false, save_end=false)
 
     # Need to loop though outputs and store plane intersecetions
     # we do not know how many plane intersections we have a-priori

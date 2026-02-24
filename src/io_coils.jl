@@ -10,7 +10,30 @@ Optional Inputs:
 
 Returns a [`CoilSet`](@ref) object.
 """
-function ReadCoilSet(filename; endcoil_delim="mod", skipstart=0, filelayout=["x", "y", "z", "current"])
+function ReadCoilSet(filename, coiltype; endcoil_delim="mod", skipstart=0, filelayout=["x", "y", "z", "current"])
+
+    if coiltype == :delim
+        return _read_coils_mod(filename, skipstart, filelayout)
+    end
+end
+
+
+function _read_coils_quasr(quasrID)
+    quasr_address = "https://quasr.flatironinstitute.org/simsopt_serials/0122/"
+    quasrJSON = HTTP.get(
+        string(string(quasr_address, "serial"), string(quasrID, pad=7))
+    )
+    quasrstr = String(quasrJSON.body)
+    quasrdict = JSON.Parser.parse(quasrstr)
+end
+
+
+"""
+Read coils from a file with the coil delimiter `mod`
+"""
+function _read_coils_mod(filename, skipstart, filelayout)
+
+    endcoil_delim = "mod"
 
     fread = readdlm(filename, skipstart=skipstart)
 
@@ -34,20 +57,6 @@ function ReadCoilSet(filename; endcoil_delim="mod", skipstart=0, filelayout=["x"
     coilset = CoilSet([coils...])
 
     return coilset
-end
-
-
-function _read_coils_quasr(quasrID)
-    quasr_address = "https://quasr.flatironinstitute.org/simsopt_serials/0122/"
-    quasrJSON = HTTP.get(
-        string(string(quasr_address, "serial"), string(quasrID, pad=7))
-    )
-    quasrstr = String(quasrJSON.body)
-    quasrdict = JSON.Parser.parse(quasrstr)
-end
-
-
-function _read_coils_mod()
 end
 
 

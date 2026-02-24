@@ -3,7 +3,7 @@ using CoilFields
 
 using GLMakie
 
-coilset = ReadCoilSet("./test/coilset", skipstart=3)
+coilset = ReadCoilSet("./test/coilset", :delim, skipstart=3)
 
 # Randomly generate initial points
 X₀ = [10.0, 0.0, 0.0]
