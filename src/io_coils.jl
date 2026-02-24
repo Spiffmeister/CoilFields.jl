@@ -18,16 +18,6 @@ function ReadCoilSet(filename, coiltype; endcoil_delim="mod", skipstart=0, filel
 end
 
 
-function _read_coils_quasr(quasrID)
-    quasr_address = "https://quasr.flatironinstitute.org/simsopt_serials/0122/"
-    quasrJSON = HTTP.get(
-        string(string(quasr_address, "serial"), string(quasrID, pad=7))
-    )
-    quasrstr = String(quasrJSON.body)
-    quasrdict = JSON.Parser.parse(quasrstr)
-end
-
-
 """
 Read coils from a file with the coil delimiter `mod`
 """

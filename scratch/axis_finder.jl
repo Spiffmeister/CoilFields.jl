@@ -51,22 +51,23 @@ function axis_diff(X, coilset)
 end
 
 
-function find_axis(X, coilset)
+function find_axis(X, coilset, a)
     nlp = NonlinearProblem((X, p) -> axis_diff(X, coilset), X)
     nls = solve(nlp)
     return [nls.u[1], 0.0, nls.u[2]]
 end
 
+@show "solve"
 
 
 X = [10.0, 0.0]
 # x = axis_diff(X, coilset)
 
-x_ax = find_axis(X, coilset)
+x_ax = find_axis(X, coilset, :a)
 
+@show "ode"
 
-
-fieldline = ODEProblem((ẋ, x, p, t) -> CoilFields.field_line!(ẋ, x, p, t, coilset), [10.0, 0.0, 0.0], (0.0, 800))
+fieldline = ODEProblem((ẋ, x, p, t) -> CoilFields.field_line!(ẋ, x, p, t, coilset), x_ax, (0.0, 800))
 sol = solve(fieldline, Tsit5(), callback=cb, save_everystep=false)
 
 

@@ -159,6 +159,8 @@ end
 
 """
 Find the axis of a coilset.
+
+At the moment implemented so that the initial point should be on the x-z plane
 """
 function find_axis(X, coilset)
     event_affect!(integrator) = terminate!(integrator)
