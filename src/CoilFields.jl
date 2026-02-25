@@ -4,13 +4,15 @@ using LinearAlgebra: norm, cross, dot
 using Base.Threads
 using OhMyThreads: tmap
 using StaticArrays
+using HTTP: get
+using JSON: parse
 using DelimitedFiles: readdlm
 using OrdinaryDiffEq: ODEProblem, solve, Tsit5, ContinuousCallback, EnsembleProblem, EnsembleThreads, remake, terminate!
 using NonlinearSolve: NonlinearProblem, solve
 
 
 
-# include("Fourier.jl")
+include("Fourier.jl")
 include("coils.jl")
 include("Fields.jl")
 include("io_coils.jl")

@@ -18,6 +18,14 @@ function ReadCoilSet(filename, coiltype; endcoil_delim="mod", skipstart=0, filel
 end
 
 
+
+
+
+
+
+
+
+
 """
 Read coils from a file with the coil delimiter `mod`
 """
@@ -48,6 +56,70 @@ function _read_coils_mod(filename, skipstart, filelayout)
 
     return coilset
 end
+
+
+
+
+
+function _quasr_find_coils(quasrdict::Dict)
+    # Find keys with "coil" in the name
+    coilkeys = [key for key in keys(quasrdict["simsopt_objs"]) if occursin("Coil", key)]
+    # get the fourier object which corresponds to this coil
+    curvekeys = [_descend_coils(quasrdict["simsopt_objs"], key) for key in coilkeys]
+
+    return coilkeys, curvekeys
+end
+
+function _quasr_descend_coils(simsopt_objs, coilkey)
+    curvekey = simsopt_objs[coilkey]["curve"]["value"]
+    # Its possible we don't get the fourier object
+    if occursin("RotatedCurve", curvekey)
+        curvekey = simsopt_objs[curvekey]["curve"]["value"]
+    end
+    return curvekey
+end
+
+function _quasr_to_coil(seriesval, dofs, dofnames)
+    inds = findall(name -> occursin(seriesval, name), dofnames)
+    series_dofs = Float64.(dofs[inds])
+    if occursin("c", seriesval)
+        seriestype = :cos
+    elseif occursin("s", seriesval)
+        seriestype = :sin
+    end
+    return CoilFields.Fourier(seriestype, series_dofs, length(series_dofs))
+end
+
+function _get_curve_data(simsopt_objs, curvekey)
+    # The ID of the actual FS
+    coilid = simsopt_objs[curvekey]["dofs"]["value"]
+
+    knots = simsopt_objs[curvekey]["quadpoints"]["data"]
+    series_order = simsopt_objs[curvekey]["order"]
+    # The fourier amplitudes and the elements of the series
+    dofs = simsopt_objs[coilid]["x"]["data"]
+    dofnames = simsopt_objs[coilid]["names"]
+
+    return coilid, knots, series_order, dofs, dofnames
+end
+
+
+
+function get_coils_quasr(quasrID)
+
+    quasr_address = "https://quasr.flatironinstitute.org/simsopt_serials/"
+    quasrJSON = get(
+        string(quasr_address, quasrID[1:4], "/", "serial", quasrID, ".json")
+    )
+    quasrstr = String(quasrJSON.body)
+
+    quasrdict = parse(quasrstr, allownan=true)
+    return quasrdict
+end
+
+
+
+
 
 
 
