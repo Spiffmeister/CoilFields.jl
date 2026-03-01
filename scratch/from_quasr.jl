@@ -5,24 +5,18 @@ using JSON
 
 quasrID = "0019907"
 
-quasrdict = CoilFields.get_coils_quasr(quasrID)
+# quasrdict = CoilFields._get_coils_quasr(quasrID)
 
 
-function _find_quasr_coils(quasrdict)
-    # Find keys with "coil" in the name
-    coilkeys = [key for key in keys(quasrdict["simsopt_objs"]) if occursin("Coil", key)]
-    # get the fourier object which corresponds to this coil
-    curvekeys = [_descend_coils(quasrdict["simsopt_objs"], key) for key in coilkeys]
 
-    return coilkeys, curvekeys
-end
 
-function _descend_coils(simsopt_objs, coilkey)
+function _collect_quasr_coildata(simsopt_objs, coilkey)
     # A curve is either a
     curvekey = simsopt_objs[coilkey]["curve"]["value"]
     currentkey = simsopt_objs[coilkey]["current"]["value"]
     rotation = zero(Float64)
     flip = false
+
     # Its possible we don't get the fourier object
     if occursin("RotatedCurve", curvekey)
         rotation = Float64(simsopt_objs[curvekey]["phi"])
@@ -31,30 +25,48 @@ function _descend_coils(simsopt_objs, coilkey)
         curvekey = simsopt_objs[curvekey]["curve"]["value"]
     end
 
-    return curvekey, rotation, flip, currentkey
-end
+    # Need to descend coils until we find the correct object
+    function getkey(currentname, depth=10)
+        its = 1
+        while occursin("ScaledCurrent", currentname) & its < depth
+            currentname = simsopt_objs[currentname]["current_to_scale"]["value"]
+            if !occursin("ScaledCurrent", currentname)
+                return currentname
+            end
+            its += 1
+        end
+    end
+    currentname = getkey(currentkey)
+    currentid = simsopt_objs[currentname]["dofs"]["value"]
+    current = Float64.(simsopt_objs[currentid]["x"]["data"])[1]
+    # currentscale = Float64.(simsopt_objs[currentkey])
 
-function _get_curve_data(simsopt_objs, curvekey)
-    # The ID of the actual FS
     coilid = simsopt_objs[curvekey]["dofs"]["value"]
-
     knots = simsopt_objs[curvekey]["quadpoints"]["data"]
-    series_order = simsopt_objs[curvekey]["order"]
-    # The fourier amplitudes and the elements of the series
-    dofs = simsopt_objs[coilid]["x"]["data"]
-    dofnames = simsopt_objs[coilid]["names"]
+    order = Int(simsopt_objs[curvekey]["order"])
 
-    return coilid, knots, series_order, dofs, dofnames
+    dofs = Vector{Float64}(simsopt_objs[coilid]["x"]["data"])
+    dofnames = Vector{String}(simsopt_objs[coilid]["names"])
+
+    coildata = (curvename=curvekey,
+        rotation=rotation,
+        flipped=flip,
+        currentname=currentkey,
+        coilid=coilid,
+        knots=knots,
+        order=order,
+        dofs=dofs,
+        dofnames=dofnames,
+        current=current
+    )
+
+    return coildata
 end
 
 
-coils_curves = _find_quasr_coils(quasrdict)
-
-curve_data = _get_curve_data(quasrdict["simsopt_objs"], coils_curves[2][1][1])
-
-function _quasr_to_coil(seriesval, dofs, dofnames)
+function _quasr_to_fourier(seriesval, dofs, dofnames)
     inds = findall(name -> occursin(seriesval, name), dofnames)
-    series_dofs = Float64.(dofs[inds])
+    series_dofs = dofs[inds]
 
     if occursin("c", seriesval)
         seriestype = :cos
@@ -65,7 +77,37 @@ function _quasr_to_coil(seriesval, dofs, dofnames)
     return CoilFields.Fourier(seriestype, series_dofs, length(series_dofs))
 end
 
+function _quasr_to_coil(axis::String, amplitudes, labels)
+    FS = map(stype -> _quasr_to_fourier(string(axis, stype), amplitudes, labels), ("c", "s"))
+    return CoilFields.FourierSeries(FS...)
+end
+
+function _quasr_to_coil(amplitudes::Vector, labels)
+    x, y, z = map(ax -> _quasr_to_coil(ax, amplitudes, labels), ["x", "y", "z"])
+    return CoilFields.FourierCurve(x, y, z)
+end
+
+_quasr_to_coil(curvedata::NamedTuple) = _quasr_to_coil(curvedata.dofs, curvedata.dofnames)
+
+
+function _quasr_to_coilset(quasrdict)
+    simsopt_objs = quasrdict["simsopt_objs"]
+    # Get the coilnames and the data for each coil
+    coilkeys = [key for key in keys(quasrdict["simsopt_objs"]) if occursin("Coil", key)]
+    # Collect all the coil data
+    curve_data = [_collect_quasr_coildata(simsopt_objs, coilname) for coilname in coilkeys]
+    # generaate a vector of the coils
+    coilset = [_quasr_to_coil(curve) for curve in curve_data]
+    return coilset
+end
+
+
+# curve_data = _get_curve_data(quasrdict["simsopt_objs"], coils_curves[2][1][1])
 # seriesvals = ["x", "y", "z"], ["c", "s"]
-fourierc = _quasr_to_coil("xc", curve_data[4], curve_data[5])
-fouriers = _quasr_to_coil("xs", curve_data[4], curve_data[5])
-x = CoilFields.FourierSeries(fourierc, fouriers)
+# x = _quasr_to_coil("x", curve_data[4], curve_data[5])
+# f = _quasr_to_coil(curve_data.dofs, curve_data.dofnames)
+coilkeys = [key for key in keys(quasrdict["simsopt_objs"]) if occursin("Coil", key)]
+curve_data = [_collect_quasr_coildata(quasrdict["simsopt_objs"], coilname) for coilname in coilkeys]
+
+
+ooga = _quasr_to_coilset(quasrdict)

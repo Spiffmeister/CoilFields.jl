@@ -52,11 +52,11 @@ end
 
 
 
-struct FourierCurve{TT,MODES}
+struct FourierCurve{TT}
     x::FourierSeries
     y::FourierSeries
     z::FourierSeries
-    FourierCurve(m) = new{Float64,m}(Fourier1D(m), Fourier1D(m))
+    FourierCurve(Fx, Fy, Fz) = new{Float64}(Fx, Fy, Fz)
 end
 
 (ℱc::FourierCurve)(t) = ℱc.R(t), ℱc.Z(t)
