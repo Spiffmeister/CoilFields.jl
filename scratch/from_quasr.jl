@@ -82,12 +82,13 @@ function _quasr_to_coil(axis::String, amplitudes, labels)
     return CoilFields.FourierSeries(FS...)
 end
 
-function _quasr_to_coil(amplitudes::Vector, labels)
+function _quasr_to_coil(amplitudes::Vector, labels, current)
     x, y, z = map(ax -> _quasr_to_coil(ax, amplitudes, labels), ["x", "y", "z"])
-    return CoilFields.FourierCurve(x, y, z)
+    FC = CoilFields.FourierCurve(x, y, z)
+    return CoilFields.Coil(FC, current, length(labels))
 end
 
-_quasr_to_coil(curvedata::NamedTuple) = _quasr_to_coil(curvedata.dofs, curvedata.dofnames)
+_quasr_to_coil(curvedata::NamedTuple) = _quasr_to_coil(curvedata.dofs, curvedata.dofnames, curvedata.current)
 
 
 function _quasr_to_coilset(quasrdict)
@@ -98,7 +99,7 @@ function _quasr_to_coilset(quasrdict)
     curve_data = [_collect_quasr_coildata(simsopt_objs, coilname) for coilname in coilkeys]
     # generaate a vector of the coils
     coilset = [_quasr_to_coil(curve) for curve in curve_data]
-    return coilset
+    return CoilFields.CoilSet(coilset)
 end
 
 

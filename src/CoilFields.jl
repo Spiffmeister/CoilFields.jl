@@ -26,10 +26,11 @@ export Coil, CoilSet
 export Biot_Savart, Biot_Savart!
 export Biot_Savart_A, Biot_Savart_A!
 export CompactLinear
-export ReadCoilSet
 export FieldLine
 export find_axis
 
+export ReadCoilSet
+export GetCoilSet
 
 
 export plotcoil, plotcoil!

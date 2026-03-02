@@ -18,7 +18,10 @@ function ReadCoilSet(filename, coiltype; endcoil_delim="mod", skipstart=0, filel
 end
 
 
-
+function GetCoilSet(location, coiltype=:quasr)
+    quasrdict = _get_coils_quasr(location)
+    return _quasr_to_coilset(quasrdict)
+end
 
 
 
@@ -61,6 +64,8 @@ end
 
 
 
+
+
 """
 Given a `quasrID` return a `JSON.Object` of the parsed dataset.
 """
@@ -76,12 +81,18 @@ function _get_coils_quasr(quasrID)
 end
 
 
+"""
+Gather all the information needed to construct a coil from the QUASR database
+
+`simopt_objs` is the `simsopt_dict['simsopt_objs']` dictionary and `coilkey` is a coil ID in the `simsopt_objs`
+"""
 function _collect_quasr_coildata(simsopt_objs, coilkey)
     # A curve is either a
     curvekey = simsopt_objs[coilkey]["curve"]["value"]
     currentkey = simsopt_objs[coilkey]["current"]["value"]
     rotation = zero(Float64)
     flip = false
+
     # Its possible we don't get the fourier object
     if occursin("RotatedCurve", curvekey)
         rotation = Float64(simsopt_objs[curvekey]["phi"])
@@ -89,6 +100,22 @@ function _collect_quasr_coildata(simsopt_objs, coilkey)
         # we can now replace curvekey that we have what we need
         curvekey = simsopt_objs[curvekey]["curve"]["value"]
     end
+
+    # Need to descend coils until we find the correct object
+    function getkey(currentname, depth=10)
+        its = 1
+        while occursin("ScaledCurrent", currentname) & its < depth
+            currentname = simsopt_objs[currentname]["current_to_scale"]["value"]
+            if !occursin("ScaledCurrent", currentname)
+                return currentname
+            end
+            its += 1
+        end
+    end
+    currentname = getkey(currentkey)
+    currentid = simsopt_objs[currentname]["dofs"]["value"]
+    current = Float64.(simsopt_objs[currentid]["x"]["data"])[1]
+    # currentscale = Float64.(simsopt_objs[currentkey])
 
     coilid = simsopt_objs[curvekey]["dofs"]["value"]
     knots = simsopt_objs[curvekey]["quadpoints"]["data"]
@@ -105,13 +132,19 @@ function _collect_quasr_coildata(simsopt_objs, coilkey)
         knots=knots,
         order=order,
         dofs=dofs,
-        dofnames=dofnames
+        dofnames=dofnames,
+        current=current
     )
 
     return coildata
 end
 
 
+"""
+Convert a `Vector` of `dofs` to a `Fourier` series from the QUASR database.
+
+`seriesval` is used to search the `dofnames` for the given series to create.
+"""
 function _quasr_to_fourier(seriesval, dofs, dofnames)
     inds = findall(name -> occursin(seriesval, name), dofnames)
     series_dofs = dofs[inds]
@@ -125,19 +158,27 @@ function _quasr_to_fourier(seriesval, dofs, dofnames)
     return CoilFields.Fourier(seriestype, series_dofs, length(series_dofs))
 end
 
-function _quasr_to_coil(axis::String, amplitudes, labels)
-    FS = map(stype -> _quasr_to_fourier(string(axis, stype), amplitudes, labels), ("c", "s"))
+"""
+Given an `axis` (`"x"`, `"y"` or `"z"`) and a `Vector` of `amplitudes` and `dofnames` create a `FourierSeries`.
+"""
+function _quasr_to_coil(axis::String, amplitudes, dofnames)
+    FS = map(stype -> _quasr_to_fourier(string(axis, stype), amplitudes, dofnames), ("c", "s"))
     return CoilFields.FourierSeries(FS...)
 end
 
-function _quasr_to_coil(amplitudes::Vector, labels)
-    x, y, z = map(ax -> _quasr_to_coil(ax, amplitudes, labels), ["x", "y", "z"])
-    return CoilFields.FourierCurve(x, y, z)
+"""
+ Convert a `Vector` of `amplitudes` and `dofnames` to a `FourierCurve`
+"""
+function _quasr_to_coil(amplitudes::Vector, dofnames, current)
+    x, y, z = map(ax -> _quasr_to_coil(ax, amplitudes, dofnames), ["x", "y", "z"])
+    FC = CoilFields.FourierCurve(x, y, z)
+    return CoilFields.Coil(FC, current, length(dofnames))
 end
+_quasr_to_coil(curvedata::NamedTuple) = _quasr_to_coil(curvedata.dofs, curvedata.dofnames, curvedata.current)
 
-_quasr_to_coil(curvedata::NamedTuple) = _quasr_to_coil(curvedata.dofs, curvedata.dofnames)
-
-
+"""
+Take the output of `_get_coils_quasr` and convert it to a `CoilSet`
+"""
 function _quasr_to_coilset(quasrdict)
     simsopt_objs = quasrdict["simsopt_objs"]
     # Get the coilnames and the data for each coil

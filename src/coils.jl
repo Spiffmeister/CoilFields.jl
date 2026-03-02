@@ -18,8 +18,9 @@ struct Coil{TT,GEOMETRY}
 end
 
 Base.eachindex(coil::Coil) = 1:coil.length
-Base.eltype(::Coil{TT}) where TT = TT
-Base.getindex(coil::Coil{TT,<:NTuple}, i) where TT = coil.Geometry[i]
+Base.eltype(::Coil{TT}) where {TT} = TT
+Base.getindex(coil::Coil{TT,<:NTuple}, i) where {TT} = coil.Geometry[i]
+
 
 """
 """
@@ -50,5 +51,5 @@ struct CoilSet{TT,GEOMETRY}
     Coils::Vector{Coil{TT,GEOMETRY}}
 end
 Base.iterate(CS::CoilSet, state=1) = state > length(CS.Coils) ? nothing : (CS.Coils[state], state + 1)
-Base.eltype(::CoilSet{TT}) where TT = TT
+Base.eltype(::CoilSet{TT}) where {TT} = TT
 Base.getindex(cs::CoilSet, i) = cs.Coils[i]
