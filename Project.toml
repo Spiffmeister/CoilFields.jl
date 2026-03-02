@@ -1,23 +1,36 @@
 name = "CoilFields"
 uuid = "995d4d6b-9c7a-49f3-8fbe-7df0de3633c3"
-authors = ["Spiffmeister <robospiff@gmail.com>"]
 version = "0.1.0"
+authors = ["Spiffmeister <robospiff@gmail.com>"]
 
 [deps]
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+NonlinearSolve = "8913a72c-1f9b-4ce2-8d82-65094dcecaec"
 OhMyThreads = "67456a42-1dca-4109-a031-0a68de7e3ad5"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [weakdeps]
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
 
 [extensions]
 plotting = "Makie"
+quasr = ["Downloads", "PythonCall"]
 
 [compat]
 DelimitedFiles = "1.9.1"
+Downloads = "1.7.0"
+HTTP = "1.10.19"
+JSON = "1.4.0"
 LinearAlgebra = "1.11.0"
 Makie = "0.24.6"
+NonlinearSolve = "4.15.0"
 OhMyThreads = "0.8.3"
 OrdinaryDiffEq = "6.103.0"
+PythonCall = "0.9.31"
+StaticArrays = "1.9.17"
