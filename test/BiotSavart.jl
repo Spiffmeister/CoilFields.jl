@@ -1,5 +1,7 @@
-using Revise
+# using Revise
 using CoilFields
+
+using Profile
 
 using SpecialFunctions: ellipk, ellipe
 using LinearAlgebra
@@ -19,18 +21,18 @@ circular_coil = CoilFields.Coil(coil_points, J, npts)
 
 
 # Single evaluation of the Boit-Savart at the coil origin
-CoilFields.Biot_Savart(circular_coil, [0.0, 0.0, 0.0], CoilFields.CompactLinear)
+CoilFields.Biot_Savart(circular_coil, [0.0, 0.0, 0.0], CoilFields.CompactLinear())
 
 
 # Define points along the z-axis
 pts = [[0.0, 0.0, z] for z in range(-1.0, 1.0, 1_000)];
 B = [zeros(3) for _ in eachindex(pts)];
 
-B = CoilFields.Biot_Savart(circular_coil, pts, CoilFields.CompactLinear)
-CoilFields.Biot_Savart!(B, circular_coil, pts, CoilFields.CompactLinear)
+B = CoilFields.Biot_Savart(circular_coil, pts, CoilFields.CompactLinear())
+CoilFields.Biot_Savart!(B, circular_coil, pts, CoilFields.CompactLinear())
 
 
-A = CoilFields.Biot_Savart_A(circular_coil, pts, CoilFields.CompactLinear)
+A = CoilFields.Biot_Savart_A(circular_coil, pts, CoilFields.CompactLinear())
 
 
 # using BenchmarkTools
@@ -75,3 +77,8 @@ function analytic_vector_potential()
 
     return A
 end
+
+
+
+
+B_circ_exact = circular_coil_axis_mod_B.(last.(pts), one(eltype(pts[1])), J)

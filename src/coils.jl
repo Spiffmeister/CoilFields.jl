@@ -19,7 +19,7 @@ end
 
 Base.eachindex(coil::Coil) = 1:coil.length
 Base.eltype(::Coil{TT}) where {TT} = TT
-Base.getindex(coil::Coil{TT,<:NTuple}, i) where {TT} = coil.Geometry[i]
+Base.getindex(coil::Coil{TT,GEO}, i) where {TT,GEO} = coil.Geometry[i]
 
 
 """
