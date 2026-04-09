@@ -8,12 +8,16 @@ Optional Inputs:
 - skipstart: the number of rows to skip in the read in
 - filelayout: the column labels in the file
 
+
+Endcoil delim:
+    - Supports `(function, colindex)`
+
 Returns a [`CoilSet`](@ref) object.
 """
 function ReadCoilSet(filename, coiltype; endcoil_delim="mod", skipstart=0, filelayout=["x", "y", "z", "current"])
 
     if coiltype == :delim
-        return _read_coils_mod(filename, skipstart, filelayout)
+        return _read_coils_mod(filename, skipstart, filelayout, endcoil_delim)
     end
 end
 
@@ -32,20 +36,26 @@ end
 """
 Read coils from a file with the coil delimiter `mod`
 """
-function _read_coils_mod(filename, skipstart, filelayout)
+function _read_coils_mod(filename, skipstart, filelayout, endcoil_delim, endcoil_column=0)
 
-    endcoil_delim = "mod"
+    # endcoil_delim = "mod"
 
     fread = readdlm(filename, skipstart=skipstart)
 
     ncoils = sum(occursin.(endcoil_delim, fread[:, end]))
 
     idx_startofcoil = 1
+    endcoil_column < 1 ? endcoil_column = length(fread[1,:]) : nothing
+    if typeof(endcoil_delim) <: String
+        nextcoil(str) = occursin(endcoil_delim, str)
+    end
 
     coils = []
 
     for i_coil in 1:ncoils
-        idx_endofcoil = findnext(occursin.(endcoil_delim, fread[:, end]), idx_startofcoil + 1)
+        # Scan though the lines and find the
+        @views idx_endofcoil = findnext(nextcoil, fread[:, endcoil_column], idx_startofcoil + 1)
+
         coil = Coil(
             Tuple(SVector{3}(Float64.(row[1:3])) for row in eachrow(fread[idx_startofcoil:idx_endofcoil, :])),
             fread[idx_startofcoil, 4],
@@ -59,9 +69,6 @@ function _read_coils_mod(filename, skipstart, filelayout)
 
     return coilset
 end
-
-
-
 
 
 
