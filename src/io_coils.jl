@@ -14,10 +14,10 @@ Endcoil delim:
 
 Returns a [`CoilSet`](@ref) object.
 """
-function ReadCoilSet(filename, coiltype; endcoil_delim="mod", skipstart=0, filelayout=["x", "y", "z", "current"])
+function ReadCoilSet(filename, coiltype; endcoil_delim="mod", skipstart=0, filelayout=["x", "y", "z", "current"], endcoil_column=0)
 
     if coiltype == :delim
-        return _read_coils_mod(filename, skipstart, filelayout, endcoil_delim)
+        return _read_coils_mod(filename, skipstart, filelayout, endcoil_delim, endcoil_column)
     end
 end
 
@@ -38,17 +38,17 @@ Read coils from a file with the coil delimiter `mod`
 """
 function _read_coils_mod(filename, skipstart, filelayout, endcoil_delim, endcoil_column=0)
 
-    # endcoil_delim = "mod"
-
     fread = readdlm(filename, skipstart=skipstart)
 
-    ncoils = sum(occursin.(endcoil_delim, fread[:, end]))
-
     idx_startofcoil = 1
-    endcoil_column < 1 ? endcoil_column = length(fread[1,:]) : nothing
+    endcoil_column < 1 ? endcoil_column = length(fread[1, :]) : nothing
     if typeof(endcoil_delim) <: String
         nextcoil(str) = occursin(endcoil_delim, str)
+    elseif typeof(endcoil_delim) <: Function
+        nextcoil = endcoil_delim
     end
+
+    ncoils = sum(nextcoil.(fread[:, endcoil_column]))
 
     coils = []
 
@@ -64,7 +64,6 @@ function _read_coils_mod(filename, skipstart, filelayout, endcoil_delim, endcoil
         push!(coils, coil)
         idx_startofcoil = idx_endofcoil + 1
     end
-
     coilset = CoilSet([coils...])
 
     return coilset
