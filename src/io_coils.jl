@@ -47,12 +47,11 @@ function _read_coils_mod(filename, skipstart, filelayout, endcoil_delim, endcoil
     elseif typeof(endcoil_delim) <: Function
         nextcoil = endcoil_delim
     end
-
     ncoils = sum(nextcoil.(fread[:, endcoil_column]))
-
     coils = []
+    # coiltype = []
 
-    for i_coil in 1:ncoils
+    for _ in 1:ncoils
         # Scan though the lines and find the
         @views idx_endofcoil = findnext(nextcoil, fread[:, endcoil_column], idx_startofcoil + 1)
 
@@ -64,9 +63,20 @@ function _read_coils_mod(filename, skipstart, filelayout, endcoil_delim, endcoil
         push!(coils, coil)
         idx_startofcoil = idx_endofcoil + 1
     end
-    coilset = CoilSet([coils...])
+
+
+    # Get the coil groups by finding unique coil types
+    ctypes = unique(typeof.(coils))
+    cinds = [findall(==(c), typeof.(coils)) for c in ctypes]
+    coilgroupsets = [CoilFields.CoilSet([coils[Is]...]) for Is in cinds]
+    if length(coilgroupsets) == 1
+        coilset = coilgroupsets[1]
+    else
+        coilset = CompositeCoilSet(Tuple(coilgroupsets))
+    end
 
     return coilset
+
 end
 
 

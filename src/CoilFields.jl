@@ -22,7 +22,7 @@ include("plotting.jl")
 
 
 
-export Coil, CoilSet
+export Coil, CoilSet, CompositeCoilSet
 export Biot_Savart, Biot_Savart!
 export Biot_Savart_A, Biot_Savart_A!
 export CompactLinear

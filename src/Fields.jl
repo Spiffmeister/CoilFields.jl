@@ -26,14 +26,15 @@ Evaluate the Biot Savart integral using the `CompactLinear` segments from
 Each segment is computed using the analytic form of the Biot Savart integral,
 ``\\int_0^1``
 """
-# function Biot_Savart_CompactLinearSegment!(B, pt1, pt2, X)
-#     Rᵢ = pt1 .- X
-#     Rᵢ₊₁ = pt2 .- X
-#     rᵢ = norm(Rᵢ)
-#     rᵢ₊₁ = norm(Rᵢ₊₁)
-#     B .+= cross(Rᵢ, Rᵢ₊₁) * (rᵢ + rᵢ₊₁) / (rᵢ * rᵢ₊₁ * (rᵢ * rᵢ₊₁ + dot(Rᵢ, Rᵢ₊₁)))
-#     return B
-# end
+function Biot_Savart_CompactLinearSegment(pt1, pt2, X)
+    Rᵢ = pt1 - X
+    Rᵢ₊₁ = pt2 - X
+    rᵢ = norm(Rᵢ)
+    rᵢ₊₁ = norm(Rᵢ₊₁)
+    RcrossR = cross(Rᵢ, Rᵢ₊₁)
+    B = cross(Rᵢ, Rᵢ₊₁) * (rᵢ + rᵢ₊₁) / (rᵢ * rᵢ₊₁ * (rᵢ * rᵢ₊₁ + dot(Rᵢ, Rᵢ₊₁)))
+    return B
+end
 # function Biot_Savart!(B::Vector{TT}, coil::Coil, X::Vector{TT}, ::CompactLinear) where {TT<:Real}
 #     for i in 1:coil.length-1
 #         Biot_Savart_CompactLinearSegment!(B, coil[i], coil[i+1], X)
@@ -43,19 +44,18 @@ Each segment is computed using the analytic form of the Biot Savart integral,
 # end
 
 
-function Biot_Savart!(B::Vector{TT}, coil::Coil{TT,GEO}, X::AbstractVector, ::CompactLinear) where {TT,GEO}
+
+"""
+Biot_Savart
+"""
+function Biot_Savart end
+
+# Single point single coil
+function Biot_Savart(coil::Coil{TT,GEO}, X::Vector{TT}, ::CompactLinear) where {TT<:Real,GEO}
     N = coil.length - 1
-    for I in 1:N
-        Rᵢ = coil.Geometry[I] - X
-        Rᵢ₊₁ = coil.Geometry[I+1] - X
-
-        rᵢ = norm(Rᵢ)
-        rᵢ₊₁ = norm(Rᵢ₊₁)
-
-        RcrossR = cross(Rᵢ, Rᵢ₊₁)
-        B .+= RcrossR * (rᵢ + rᵢ₊₁) / (rᵢ * rᵢ₊₁ * (rᵢ * rᵢ₊₁ + dot(Rᵢ, Rᵢ₊₁))) #allocs here
-    end
-    B .*= (coil.J * μ₀ / 4π)
+    B = mapreduce(i -> Biot_Savart_CompactLinearSegment(coil[i], coil[i+1], X), +, coil.length - 1)
+    B = B * (coil.J * μ₀ / 4π)
+    return Tuple(B)
 end
 
 """
@@ -96,34 +96,57 @@ function Biot_Savart!(B::Vector{TT}, coil::Coil{TT,PointCurvature}, X::Vector{TT
 end
 
 
-function Biot_Savart!(B::Vector{TT}, coilset::CoilSet, X, evaluation_mode) where {TT<:Real}
-    tmp = zeros(eltype(B), 3)
-    for coil in coilset
-        B .+= Biot_Savart!(tmp, coil, X, evaluation_mode)
+
+# Many coils one point
+Biot_Savart(coilset::CoilSet, X::Vector{TT}, evaluation_mode::EvaluationMode) where {TT<:Real} =
+    mapreduce(coil -> Biot_Savart(coil, X, evaluation_mode), .+, coilset)
+# Many coils many points
+Biot_Savart(coilset::CoilSet, X::AbstractArray{Vector{TT}}, evaluation_mode::EvaluationMode) where {TT} =
+    map(pt -> Biot_Savart(coilset, pt, evaluation_mode), .+, X)
+
+
+Biot_Savart(ccs::CompositeCoilSet, X, evaluation_mode) = map(cset -> Biot_Savart(cset, X, evaluation_mode), ccs.Group)
+
+"""
+In place calls
+"""
+function Biot_Savart! end
+
+# Multiple coils single point in place
+function Biot_Savart!(B::Vector{TT}, coilset::CoilSet, X::Vector{TT}, evaluation_mode, α=zero(TT)) where {TT<:Real}
+    @. B = α * B
+    B .+= Biot_Savart(coilset, X, evaluation_mode)
+end
+# Multiple coils multiple points
+function Biot_Savart!(B::AbstractArray{Vector{TT}}, coilset::CoilSet, X, evaluation_mode, α=zero(TT)) where {TT<:Real}
+    @. B = α * B
+    for i in eachindex(B)
+        B[i] .+= Biot_Savart(coilset, X[i], evaluation_mode)
     end
 end
-function Biot_Savart(coilset::CoilSet, X, evaluation_mode)
-    tmp = zeros(eltype(X), 3)
-    B = zeros(eltype(X), 3)
-    for coil in coilset
-        B .+= Biot_Savart!(tmp, coil, X, evaluation_mode)
+
+function Biot_Savart!(B::AbstractArray{Vector{TT}}, ccs::CompositeCoilSet, X, evaluation_mode, α=zero(TT)) where {TT<:Real}
+    @. B = α * B
+    for i in eachindex(B)
+        B[i] .+= Biot_Savart(ccs, X[i], evaluation_mode)
     end
-    return B
 end
+
+
+
+
 
 
 # Biot_Savart!(B,coil,X,::Evaluation{:CompactLinear}) = BiotSavart_CompactLinear!()
 
-Biot_Savart!(B::Vector{Vector{TT}}, coil, X, evaluation_mode::EvaluationMode) where {TT} = map((b, pt) -> Biot_Savart!(b, coil, pt, evaluation_mode), B, X)
+
+
 Biot_Savart_A!(B::Vector{Vector{TT}}, coil, X, evaluation_mode) where {TT} = map((b, pt) -> Biot_Savart_A!(b, coil, pt, evaluation_mode), B, X)
 
-"""
-    Biot_Savart(coil, X, evaluation_mode)
 
-Evaluate the Biot Savart integral at location(s) `X` where `X` is a Cartesian point or a vector of Cartesian points (`Vector{Vector{TT}}`)
-"""
-Biot_Savart(coil::Coil, X::Vector{TT}, evaluation_mode::EvaluationMode) where {TT<:Real} = Biot_Savart!(zeros(3), coil, X, evaluation_mode)
-Biot_Savart(coil::Coil, X::Vector{Vector{TT}}, evaluation_mode::EvaluationMode) where {TT} = map!(pt -> Biot_Savart(coil, pt, evaluation_mode), [zeros(3) for _ in eachindex(X)], X)
+
+
+
 
 Biot_Savart_A(coil::Coil, X::Vector{TT}, evaluation_mode) where {TT} = Biot_Savart_A!(zeros(3), coil, X, evaluation_mode)
 Biot_Savart_A(coil::Coil, X::Vector{Vector{TT}}, evaluation_mode) where {TT} = map!(pt -> Biot_Savart_A(coil, pt, evaluation_mode), [zeros(3) for _ in eachindex(X)], X)
