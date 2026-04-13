@@ -10,14 +10,13 @@ struct PoincarePlane{TT}
 end
 
 function field_line!(ẋ, x, p, t, coilset)
-    B = zeros(eltype(x), 3)
-    Biot_Savart!(B, coilset, x, CompactLinear)
-    ẋ .= B / norm(B)
+    B = Biot_Savart(coilset, x, CompactLinear())
+    ẋ .= B
+    ẋ ./= norm(B)
 end
 function field_line_RZ!(ẋ, x, p, t, coilset)
-    B = zeros(eltype(x), 3)
     X = (x[1] * cos(t), x[1] * sin(t), x[2])
-    Biot_Savart!(B, coilset, X, CompactLinear)
+    B = Biot_Savart(coilset, X, CompactLinear())
     R = x[1]
     Z = x[2]
     e_ρ = (cos(t), sin(t), 0)
@@ -46,8 +45,8 @@ function _initialise_fieldlines(X₀::AbstractVector{TT}, r₀::TT, N_traj) wher
     x₀ = zeros(length(X₀), N_traj)
     for xᵢ in eachcol(x₀)
         θ = 2π * rand()
-        r = r₀ * rand() * [cos(θ), sin(θ)]#, zero(eltype(X₀))]
-        xᵢ .= X₀ .+ r
+        xᵢ[1] = X₀[1] .+ r₀ * rand() * cos(θ)
+        xᵢ[2] = X₀[2] .+ r₀ * rand() * sin(θ)
     end
     return x₀
 end
@@ -87,7 +86,7 @@ function _field_line_trace(x₀, ζ, N_traj, coilset, ζ₀, integrator, events=
         cb = nothing
     end
 
-    P = ODEProblem((ẋ, x, p, t) -> field_line_RZ!(ẋ, x, p, t, coilset), x₀[:, 1], ζ)
+    P = ODEProblem((ẋ, x, p, t) -> field_line!(ẋ, x, p, t, coilset), x₀[:, 1], ζ)
     EP = EnsembleProblem(P, prob_func=(prob, i, repeat) -> _prob_fn(prob, i, repeat, x₀))
     sim = solve(EP, integrator, EnsembleThreads(), trajectories=N_traj, reltol=1e-10, callback=cb, save_everystep=false, save_start=false, save_end=false, saveat=save_times)
     return sim
@@ -98,7 +97,7 @@ end
 Construct a `PoincarePlane` at a given ζ₀∈[0,2π) assuming there is a toroidal angle with intial points centred at `X₀` with a radius `r₀`
 currently only computes a single Poincare plane
 """
-function construct_poincare(coilset::CoilSet, X₀, r₀; ζ₀=zero(eltype(coilset)), event=nothing, saveat=[], N_traj=100, t_f=800, integrator=Tsit5())
+function construct_poincare(coilset, X₀, r₀; ζ₀=zero(eltype(coilset)), event=nothing, saveat=[], N_traj=100, t_f=800, integrator=Tsit5())
 
     # We will initialise about the point X₀
     x₀ = _initialise_fieldlines(X₀, r₀, N_traj)
@@ -120,14 +119,9 @@ function construct_poincare(coilset::CoilSet, X₀, r₀; ζ₀=zero(eltype(coil
     simf = _field_line_trace(x₀, (0, t_f / 2), N_traj, coilset, ζ₀, integrator, event, saveat)
     simb = _field_line_trace(x₀, (0, -t_f / 2), N_traj, coilset, ζ₀, integrator, event, -saveat)
 
-    # Need to loop though outputs and store plane intersecetions
-    # we do not know how many plane intersections we have a-priori
-    # n_pts = mapreduce(length, +, simf.u)
-    # n_pts += mapreduce(length, +, simb.u)
-    # @show n_pts
+
     data = Vector{eltype(coilset)}[]
-    # data = Vector{Vector{TT}}(zeros(n_pts, 3))
-    # data = [zeros(3) for _ in 1:n_pts]
+
     for sim in simf.u
         for u in sim.u
             push!(data, u)

@@ -23,7 +23,7 @@ pts = [[0.0, 0.0, z] for z in range(-1.0, 1.0, 1_000)];
 # Single evaluation of the Boit-Savart at the coil origin
 Biot_Savart(circular_coil, [0.0, 0.0, 0.0], CompactLinear())
 # Map over points
-map(x->Biot_Savart(circular_coil, x, CompactLinear()), pts)
+map(x -> Biot_Savart(circular_coil, x, CompactLinear()), pts)
 
 
 
@@ -74,6 +74,9 @@ function analytic_vector_potential()
     return A
 end
 
+
+Biot_Savart(circular_coil, [0.0, 0.0, 0.0], CompactLinear())
+B_circ_exact = circular_coil_axis_mod_B(0.0, one(eltype(pts[1])), J)
 
 
 

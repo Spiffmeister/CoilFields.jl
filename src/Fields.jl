@@ -32,7 +32,7 @@ function Biot_Savart_CompactLinearSegment(pt1, pt2, X)
     rᵢ = norm(Rᵢ)
     rᵢ₊₁ = norm(Rᵢ₊₁)
     RcrossR = cross(Rᵢ, Rᵢ₊₁)
-    B = cross(Rᵢ, Rᵢ₊₁) * (rᵢ + rᵢ₊₁) / (rᵢ * rᵢ₊₁ * (rᵢ * rᵢ₊₁ + dot(Rᵢ, Rᵢ₊₁)))
+    B = RcrossR * (rᵢ + rᵢ₊₁) / (rᵢ * rᵢ₊₁ * (rᵢ * rᵢ₊₁ + dot(Rᵢ, Rᵢ₊₁)))
     return B
 end
 # function Biot_Savart!(B::Vector{TT}, coil::Coil, X::Vector{TT}, ::CompactLinear) where {TT<:Real}
@@ -52,8 +52,7 @@ function Biot_Savart end
 
 # Single point single coil
 function Biot_Savart(coil::Coil{TT,GEO}, X::Vector{TT}, ::CompactLinear) where {TT<:Real,GEO}
-    N = coil.length - 1
-    B = mapreduce(i -> Biot_Savart_CompactLinearSegment(coil[i], coil[i+1], X), +, coil.length - 1)
+    B = mapreduce(i -> Biot_Savart_CompactLinearSegment(coil[i], coil[i+1], X), +, 1:coil.length-1)
     B = B * (coil.J * μ₀ / 4π)
     return Tuple(B)
 end
@@ -100,12 +99,15 @@ end
 # Many coils one point
 Biot_Savart(coilset::CoilSet, X::Vector{TT}, evaluation_mode::EvaluationMode) where {TT<:Real} =
     mapreduce(coil -> Biot_Savart(coil, X, evaluation_mode), .+, coilset)
+# Composite coil set - should lower to the one above
+Biot_Savart(ccs::CompositeCoilSet, X::Vector{TT}, evaluation_mode) where {TT<:Real} =
+    mapreduce(cset -> Biot_Savart(cset, X, evaluation_mode), .+, ccs.Group)
+
 # Many coils many points
-Biot_Savart(coilset::CoilSet, X::AbstractArray{Vector{TT}}, evaluation_mode::EvaluationMode) where {TT} =
-    map(pt -> Biot_Savart(coilset, pt, evaluation_mode), .+, X)
+Biot_Savart(coilset::AbstractCoilSet, X::AbstractArray{Vector{TT}}, evaluation_mode::EvaluationMode) where {TT} =
+    map(pt -> Biot_Savart(coilset, pt, evaluation_mode), X)
 
 
-Biot_Savart(ccs::CompositeCoilSet, X, evaluation_mode) = map(cset -> Biot_Savart(cset, X, evaluation_mode), ccs.Group)
 
 """
 In place calls
@@ -113,24 +115,24 @@ In place calls
 function Biot_Savart! end
 
 # Multiple coils single point in place
-function Biot_Savart!(B::Vector{TT}, coilset::CoilSet, X::Vector{TT}, evaluation_mode, α=zero(TT)) where {TT<:Real}
+function Biot_Savart!(B::Vector{TT}, coilset::AbstractCoilSet, X::Vector{TT}, evaluation_mode, α=zero(TT)) where {TT<:Real}
     @. B = α * B
     B .+= Biot_Savart(coilset, X, evaluation_mode)
 end
 # Multiple coils multiple points
-function Biot_Savart!(B::AbstractArray{Vector{TT}}, coilset::CoilSet, X, evaluation_mode, α=zero(TT)) where {TT<:Real}
+function Biot_Savart!(B::AbstractArray{Vector{TT}}, coilset::AbstractCoilSet, X, evaluation_mode, α=zero(TT)) where {TT<:Real}
     @. B = α * B
     for i in eachindex(B)
         B[i] .+= Biot_Savart(coilset, X[i], evaluation_mode)
     end
 end
 
-function Biot_Savart!(B::AbstractArray{Vector{TT}}, ccs::CompositeCoilSet, X, evaluation_mode, α=zero(TT)) where {TT<:Real}
-    @. B = α * B
-    for i in eachindex(B)
-        B[i] .+= Biot_Savart(ccs, X[i], evaluation_mode)
-    end
-end
+# function Biot_Savart!(B::AbstractArray{Vector{TT}}, ccs::CompositeCoilSet, X, evaluation_mode, α=zero(TT)) where {TT<:Real}
+#     @. B = α * B
+#     for i in eachindex(B)
+#         B[i] .+= Biot_Savart(ccs, X[i], evaluation_mode)
+#     end
+# end
 
 
 
