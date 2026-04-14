@@ -75,9 +75,14 @@ function analytic_vector_potential()
 end
 
 
+# Single point on coil
 Biot_Savart(circular_coil, [0.0, 0.0, 0.0], CompactLinear())
 B_circ_exact = circular_coil_axis_mod_B(0.0, one(eltype(pts[1])), J)
 
+
+coilset = CoilSet([circular_coil, circular_coil])
+Biot_Savart(coilset, [0.0, 0.0, 0.0], CompactLinear())
+2 * B_circ_exact
 
 
 B_circ_exact = circular_coil_axis_mod_B.(last.(pts), one(eltype(pts[1])), J)

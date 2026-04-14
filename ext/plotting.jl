@@ -37,5 +37,16 @@ function Makie.plot!(input::PlotCoils{<:Tuple{<:CoilFields.CoilSet}})
     input
 end
 
+function Makie.plot!(input::PlotCoils{<:Tuple{<:CoilFields.CompositeCoilSet}})
+    ccs = input[1][]
+    for cs in ccs.Group
+        for coil in cs
+            coil_pts = Makie.Point3f.(coil.Geometry)
+            Makie.lines!(input, [coil_pts...], color=input.color)
+        end
+    end
+    input
+end
+
 
 end

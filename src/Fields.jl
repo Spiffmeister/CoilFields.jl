@@ -4,9 +4,6 @@ struct Serial <: ExecutionMode end
 struct Threaded <: ExecutionMode end
 
 
-# struct Evaluation{EVAL_TYPE} end
-# const Linear = Evaluation{:LinearSegment}() ## TODO: Implement
-
 abstract type EvaluationMode end
 struct CompactLinear <: EvaluationMode end
 struct Curviature <: EvaluationMode end
@@ -15,16 +12,11 @@ struct Curviature <: EvaluationMode end
 
 
 """
-CompactLinear segments from [Hanson and hirshman (2002)](https://pubs.aip.org/pop/article/9/10/4410/265182/Compact-expressions-for-the-Biot-Savart-fields-of)
-"""
-# const CompactLinear = Evaluation{:CompactLinear}()
-# const LinearCurviature = Evaluation{:LinearCurviature}() ## TODO: Implement
+Evaluate the Biot Savart integral using the `CompactLinear()` segments.
 
-"""
-Evaluate the Biot Savart integral using the `CompactLinear` segments from
+`` B = \\frac{\\mu_0 I}{4\\pi} \\mathbf{R}_{i} \\times \\mathbf{R}_{i+1} \\frac{R_i R_{i+1}}{R_iR_{i+1} (R_iR_{i+1} + \\mathbf{R}_i\\cdot\\mathbf{R}_{i+1})} ``
 
-Each segment is computed using the analytic form of the Biot Savart integral,
-``\\int_0^1``
+The expression segments from the [ABCXYZ code](https://www.osti.gov/biblio/7130165) (equation 31), referenced in [Hanson and Hirshman (2002)](https://pubs.aip.org/pop/article/9/10/4410/265182/Compact-expressions-for-the-Biot-Savart-fields-of)
 """
 function Biot_Savart_CompactLinearSegment(pt1, pt2, X)
     Rᵢ = pt1 - X
@@ -35,27 +27,43 @@ function Biot_Savart_CompactLinearSegment(pt1, pt2, X)
     B = RcrossR * (rᵢ + rᵢ₊₁) / (rᵢ * rᵢ₊₁ * (rᵢ * rᵢ₊₁ + dot(Rᵢ, Rᵢ₊₁)))
     return B
 end
-# function Biot_Savart!(B::Vector{TT}, coil::Coil, X::Vector{TT}, ::CompactLinear) where {TT<:Real}
-#     for i in 1:coil.length-1
-#         Biot_Savart_CompactLinearSegment!(B, coil[i], coil[i+1], X)
-#     end
-#     B .*= (coil.J * μ₀ / 4π)
-#     return B
-# end
 
 
 
 """
-Biot_Savart
+Biot_Savart(c, X, evaluation_mode)
 """
 function Biot_Savart end
 
 # Single point single coil
 function Biot_Savart(coil::Coil{TT,GEO}, X::Vector{TT}, ::CompactLinear) where {TT<:Real,GEO}
     B = mapreduce(i -> Biot_Savart_CompactLinearSegment(coil[i], coil[i+1], X), +, 1:coil.length-1)
-    B = B * (coil.J * μ₀ / 4π)
-    return Tuple(B)
+    Bfac = (coil.J * μ₀ / 4π)::TT
+    Bscal = B * Bfac
+    return Bscal
 end
+# Many coils one point
+Biot_Savart(coilset::CoilSet, X::Vector{TT}, evaluation_mode::EvaluationMode) where {TT<:Real} =
+    mapreduce(coil -> Biot_Savart(coil, X, evaluation_mode), +, coilset)
+# Composite coil set - should lower to the one above -- output may not be type stable??
+Biot_Savart(ccs::CompositeCoilSet, X::Vector{TT}, evaluation_mode) where {TT<:Real} =
+    mapfoldl(cset -> Biot_Savart(cset, X, evaluation_mode), +, ccs.Group)
+# function Biot_Savart(ccs::CompositeCoilSet, X::Vector{TT}, evaluation_mode) where {TT<:Real}
+#     B = MVector{3, TT}(undef)
+#     Group = ccs.Group
+#     for coilset in Group
+#         B .+= Biot_Savart(coilset, X, evaluation_mode)
+#     end
+#     return B
+# end
+
+
+# Many coils many points
+Biot_Savart(coilset::AbstractCoilSet, X::AbstractArray{Vector{TT}}, evaluation_mode::EvaluationMode) where {TT} =
+    map(pt -> Biot_Savart(coilset, pt, evaluation_mode), X)
+
+
+
 
 """
 Evaluate the Biot Savart integral for the vector potential ``A`` using the `CompactLinear` segments from Hanson and Hirshman 2002, equation 7.
@@ -83,29 +91,19 @@ end
 """
 Evaluate the Biot Savart integral using the second order curvature form from
 """
-function Biot_Savart!(B::Vector{TT}, coil::Coil{TT,PointCurvature}, X::Vector{TT}, ::Curviature) where {TT}
+# function Biot_Savart!(B::Vector{TT}, coil::Coil{TT,PointCurvature}, X::Vector{TT}, ::Curviature) where {TT}
 
-    # α = κ * abs(δr′)^2 / 12
+#     # α = κ * abs(δr′)^2 / 12
 
-    for I in 1:coil.length-1
-        Rᵢ = coil.Geometry.Geometry[I] - X
-        Rᵢ₊₁ = coil.Geometry.Geometry[I+1] - X
-    end
-    B .*= coil.J * μ₀ / 4π
-end
+#     for I in 1:coil.length-1
+#         Rᵢ = coil.Geometry.Geometry[I] - X
+#         Rᵢ₊₁ = coil.Geometry.Geometry[I+1] - X
+#     end
+#     B .*= coil.J * μ₀ / 4π
+# end
 
 
 
-# Many coils one point
-Biot_Savart(coilset::CoilSet, X::Vector{TT}, evaluation_mode::EvaluationMode) where {TT<:Real} =
-    mapreduce(coil -> Biot_Savart(coil, X, evaluation_mode), .+, coilset)
-# Composite coil set - should lower to the one above
-Biot_Savart(ccs::CompositeCoilSet, X::Vector{TT}, evaluation_mode) where {TT<:Real} =
-    mapreduce(cset -> Biot_Savart(cset, X, evaluation_mode), .+, ccs.Group)
-
-# Many coils many points
-Biot_Savart(coilset::AbstractCoilSet, X::AbstractArray{Vector{TT}}, evaluation_mode::EvaluationMode) where {TT} =
-    map(pt -> Biot_Savart(coilset, pt, evaluation_mode), X)
 
 
 
@@ -117,13 +115,13 @@ function Biot_Savart! end
 # Multiple coils single point in place
 function Biot_Savart!(B::Vector{TT}, coilset::AbstractCoilSet, X::Vector{TT}, evaluation_mode, α=zero(TT)) where {TT<:Real}
     @. B = α * B
-    B .+= Biot_Savart(coilset, X, evaluation_mode)
+    B += Biot_Savart(coilset, X, evaluation_mode)
 end
 # Multiple coils multiple points
 function Biot_Savart!(B::AbstractArray{Vector{TT}}, coilset::AbstractCoilSet, X, evaluation_mode, α=zero(TT)) where {TT<:Real}
     @. B = α * B
     for i in eachindex(B)
-        B[i] .+= Biot_Savart(coilset, X[i], evaluation_mode)
+        B[i] += Biot_Savart(coilset, X[i], evaluation_mode)
     end
 end
 

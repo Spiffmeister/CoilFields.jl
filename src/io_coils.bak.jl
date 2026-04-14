@@ -1,27 +1,33 @@
 """
-    ReadCoilSet(filename; endcoil_delim="mod", skipstart=0, filelayout=["x", "y", "z", "current"])
+    ReadCoilSet(filename, coiltype=:delim; endcoil_delim="mod", skipstart=0, filelayout=["x", "y", "z", "current"], endcoil_column=0)
 
-For reading in the most common format of coil file.
+For reading in delimited coil files.
+
+
 
 Optional Inputs:
 - endcoil_delim: What string is used to mark the final row for a coil
-- skipstart: the number of rows to skip in the read in
+    Can also be a `Function` (i.e. `iszero`)
+- skipstart: the number of rows to skip in the read in, default `0`
 - filelayout: the column labels in the file
+- endcoil_column: The column label which corresponds to the end of a coil.
 
 
-Endcoil delim:
-    - Supports `(function, colindex)`
+```julia
+```
 
-Returns a [`CoilSet`](@ref) object.
+Returns a [`CoilSet`](@ref) or [`CompositeCoilSet`](@ref) object.
 """
-function ReadCoilSet(filename, coiltype; endcoil_delim="mod", skipstart=0, filelayout=["x", "y", "z", "current"], endcoil_column=0)
+function ReadCoilSet(filename, coiltype=:delim; endcoil_delim="mod", skipstart=0, filelayout=["x", "y", "z", "current"], endcoil_column=0)
 
     if coiltype == :delim
         return _read_coils_mod(filename, skipstart, filelayout, endcoil_delim, endcoil_column)
     end
 end
 
-
+"""
+Get the `CoilSet` or `CompositeCoilSet`
+"""
 function GetCoilSet(location, coiltype=:quasr)
     quasrdict = _get_coils_quasr(location)
     return _quasr_to_coilset(quasrdict)

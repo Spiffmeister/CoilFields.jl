@@ -1,0 +1,6 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+CoilFields = "995d4d6b-9c7a-49f3-8fbe-7df0de3633c3"
+
+[sources]
+CoilFields = {path = ".."}
