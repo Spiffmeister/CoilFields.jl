@@ -1,8 +1,13 @@
 Manifest.toml
 scratch*.jl
 .CondaPkg
+
 *w7x*
 *W7x*
 *w7X*
 *W7X*
+
 *.mem
+*.gz
+
+/docs/build/*
