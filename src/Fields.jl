@@ -42,21 +42,14 @@ function Biot_Savart(coil::Coil{TT,GEO}, X::Vector{TT}, ::CompactLinear) where {
     Bscal = B * Bfac
     return Bscal
 end
+
 # Many coils one point
 Biot_Savart(coilset::CoilSet, X::Vector{TT}, evaluation_mode::EvaluationMode) where {TT<:Real} =
     mapreduce(coil -> Biot_Savart(coil, X, evaluation_mode), +, coilset)
+
 # Composite coil set - should lower to the one above -- output may not be type stable??
 Biot_Savart(ccs::CompositeCoilSet, X::Vector{TT}, evaluation_mode) where {TT<:Real} =
     mapfoldl(cset -> Biot_Savart(cset, X, evaluation_mode), +, ccs.Group)
-# function Biot_Savart(ccs::CompositeCoilSet, X::Vector{TT}, evaluation_mode) where {TT<:Real}
-#     B = MVector{3, TT}(undef)
-#     Group = ccs.Group
-#     for coilset in Group
-#         B .+= Biot_Savart(coilset, X, evaluation_mode)
-#     end
-#     return B
-# end
-
 
 # Many coils many points
 Biot_Savart(coilset::AbstractCoilSet, X::AbstractArray{Vector{TT}}, evaluation_mode::EvaluationMode) where {TT} =
