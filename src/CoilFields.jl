@@ -32,6 +32,8 @@ export find_axis
 export ReadCoilSet
 export GetCoilSet
 
+export construct_poincare
+
 
 export plotcoil, plotcoil!
 export plotcoils, plotcoils!
