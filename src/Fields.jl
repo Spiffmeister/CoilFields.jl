@@ -3,7 +3,12 @@ abstract type ExecutionMode end
 struct Serial <: ExecutionMode end
 struct Threaded <: ExecutionMode end
 
+"""
+Used to determine which method to use to evaluate ``\\mathbf{B}`` or ``\\mathbf{A}``.
 
+Currently implemented is:
+    - `CompactLinear` for [`Biot_Savart_CompactLinearSegment`](@ref)
+"""
 abstract type EvaluationMode end
 struct CompactLinear <: EvaluationMode end
 struct Curviature <: EvaluationMode end
@@ -31,7 +36,10 @@ end
 
 
 """
-Biot_Savart(c, X, evaluation_mode)
+    Biot_Savart(c, X, evaluation_mode)
+
+Evaluates the Biot Savart integral to compute ``\\mathbf{B}`` using a `Coil` or `AbstractCoilSet`, a position or set of positions `X` and
+using some [`EvaluationMode`](@ref)
 """
 function Biot_Savart end
 

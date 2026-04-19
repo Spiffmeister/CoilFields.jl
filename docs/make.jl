@@ -3,9 +3,12 @@ push!(LOAD_PATH, "../src/")
 
 using Documenter, Literate, CoilFields
 
-# LitPathExample = joinpath(@__DIR__, "..", "examples","fieldlinetracing.jl")
-# DocSrc = joinpath(@__DIR__, "src", "examples") #.md creation path
-# Literate.markdown(LitPathExample, DocSrc, codefence="```text" => "```")
+LitPathExampleFLT = joinpath(@__DIR__, "..", "examples", "fieldlinetracing.jl")
+LitPathExamplePlot = joinpath(@__DIR__, "..", "examples", "plots.jl")
+DocSrc = joinpath(@__DIR__, "src", "examples") #.md creation path
+Literate.markdown(LitPathExamplePlot, DocSrc)
+Literate.markdown(LitPathExampleFLT, DocSrc)
+
 
 
 makedocs(sitename="CoilFields",
@@ -15,11 +18,13 @@ makedocs(sitename="CoilFields",
             "reading.md"
         ],
         "Coil sets" => [
-            "coils.md"
+            "coils.md",
+            "examples/plots.md"
         ],
         "Magnetic field" => [
-            "magneticfield.md"
-            ]
+            "magneticfield.md",
+            "examples/fieldlinetracing.md"
+        ]
     ],
     modules=[CoilFields],
     format=Documenter.HTML(prettyurls=false),
