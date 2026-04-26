@@ -2,7 +2,7 @@
 """
 Get the `CoilSet` or `CompositeCoilSet`
 """
-function GetCoilSet(location, coiltype=:quasr)
+function getcoilset(location, coiltype=:quasr)
     quasrdict = get_coils_quasr(location)
     return quasr_to_coilset(quasrdict)
 end

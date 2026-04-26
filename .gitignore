@@ -11,3 +11,4 @@ scratch*.jl
 *.gz
 
 /docs/build/*
+/docs/src/examples/*

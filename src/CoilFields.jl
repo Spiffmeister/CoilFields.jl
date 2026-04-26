@@ -23,14 +23,14 @@ include("plotting.jl")
 
 
 export Coil, CoilSet, CompositeCoilSet
-export Biot_Savart, Biot_Savart!
-# export Biot_Savart_A, Biot_Savart_A!
+export biot_savart, biot_savart!
+# export biot_savart_A, biot_savart_A!
 export CompactLinear
 export FieldLine
 export find_axis
 
-export ReadCoilSet
-export GetCoilSet
+export readcoilset
+export getcoilset
 
 export construct_poincare
 

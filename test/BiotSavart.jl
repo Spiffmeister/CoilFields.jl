@@ -6,8 +6,7 @@ using LinearAlgebra
 using StaticArrays
 
 
-import PhysicalConstants.CODATA2022: μ_0
-
+μ_0 = CoilFields.μ₀
 
 # Define a single magnetic coil
 
@@ -17,7 +16,7 @@ import PhysicalConstants.CODATA2022: μ_0
 
 
 
-# A = CoilFields.Biot_Savart_A(circular_coil, pts, CoilFields.CompactLinear())
+# A = CoilFields.biot_savart_A(circular_coil, pts, CoilFields.CompactLinear())
 
 
 
@@ -41,13 +40,13 @@ circular_coil_axis_mod_B(z, R, J) = μ_0 * J * R^2 / (2 * (z^2 + R^2)^(3 / 2))
     # Single evaluation of the Boit-Savart at the coil origin
 
     @testset "Single point on axis" begin
-        B = Biot_Savart(circular_coil, origin, CompactLinear())
+        B = biot_savart(circular_coil, origin, CompactLinear())
         B_exact = circular_coil_axis_mod_B(zero(eltype(origin)), one(eltype(origin)), J)
-        @test norm(B) ≈ B_exact
+        @test (norm(B) - B_exact) ≤ 1e-10
     end
 
     @testset "Multiple points along axis" begin
-        B = map(x -> Biot_Savart(circular_coil, x, CompactLinear()), pts)
+        B = map(x -> biot_savart(circular_coil, x, CompactLinear()), pts)
     end
 
 end
@@ -74,12 +73,12 @@ end
 
 
 # Single point on coil
-Biot_Savart(circular_coil, [0.0, 0.0, 0.0], CompactLinear())
+biot_savart(circular_coil, [0.0, 0.0, 0.0], CompactLinear())
 B_circ_exact = circular_coil_axis_mod_B(0.0, one(eltype(pts[1])), J)
 
 
 coilset = CoilSet([circular_coil, circular_coil])
-Biot_Savart(coilset, [0.0, 0.0, 0.0], CompactLinear())
+biot_savart(coilset, [0.0, 0.0, 0.0], CompactLinear())
 2 * B_circ_exact
 
 

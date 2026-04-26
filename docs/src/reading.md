@@ -4,7 +4,7 @@
 ## from a delimited file
 
 ```@docs
-ReadCoilSet
+readcoilset
 ```
 
 
@@ -16,5 +16,5 @@ Not fully implemented yet
 
 
 ```@docs
-GetCoilSet
+getcoilset
 ```

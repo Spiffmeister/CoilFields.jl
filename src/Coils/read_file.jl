@@ -1,5 +1,5 @@
 """
-    ReadCoilSet(filename, coiltype=:delim; endcoil_delim="mod", skipstart=0, filelayout=["x", "y", "z", "current"], endcoil_column=0)
+    readcoilset(filename, coiltype=:delim; endcoil_delim="mod", skipstart=0, filelayout=["x", "y", "z", "current"], endcoil_column=0)
 
 For reading in delimited coil files.
 
@@ -15,12 +15,12 @@ Optional Inputs:
 
 As an example, consider reading the coilset included in the `test` folder:
 ```julia
-coilset = ReadCoilSet("./test/coilset", skipstart=3)
+coilset = readcoilset("./test/coilset", skipstart=3)
 ```
 
 Returns a [`CoilSet`](@ref) if all `Coil` objects are of the same type or [`CompositeCoilSet`](@ref) otherwise.
 """
-function ReadCoilSet(filename, coiltype=:delim; endcoil_delim="mod", skipstart=0, filelayout=["x", "y", "z", "current"], endcoil_column=0)
+function readcoilset(filename, coiltype=:delim; endcoil_delim="mod", skipstart=0, filelayout=["x", "y", "z", "current"], endcoil_column=0)
 
     if coiltype == :delim
         return read_coils_mod(filename, skipstart, filelayout, endcoil_delim, endcoil_column)

@@ -3,7 +3,7 @@ using CoilFields
 
 
 # Test from coilset
-coilset = ReadCoilSet("./test/coilset", :delim, skipstart=3)
+coilset = readcoilset("./test/coilset", :delim, skipstart=3)
 
 X = [10.0, 0.0]
 

@@ -10,13 +10,13 @@ struct PoincarePlane{TT}
 end
 
 function field_line!(ẋ, x, p, t, coilset)
-    B = Biot_Savart(coilset, x, CompactLinear())
+    B = biot_savart(coilset, x, CompactLinear())
     ẋ .= B
     ẋ ./= norm(B)
 end
 function field_line_RZ!(ẋ, x, p, t, coilset)
     X = (x[1] * cos(t), x[1] * sin(t), x[2])
-    B = Biot_Savart(coilset, X, CompactLinear())
+    B = biot_savart(coilset, X, CompactLinear())
     R = x[1]
     Z = x[2]
     e_ρ = (cos(t), sin(t), 0)
@@ -32,7 +32,7 @@ end
 
 function field_line_branch!(ẋ, x, p, t, coilset)
     B = zeros(eltype(x), 3)
-    Biot_Savart!(B, coilset, x, CompactLinear)
+    biot_savart!(B, coilset, x, CompactLinear)
     for i in 1:3
         ẋ[i] = B[i] / norm(B)
     end
@@ -97,7 +97,7 @@ end
 Construct a `PoincarePlane` at a given ζ₀∈[0,2π) assuming there is a toroidal angle with intial points centred at `X₀` with a radius `r₀`
 currently only computes a single Poincare plane
 """
-function construct_poincare(coilset, X₀, r₀; ζ₀=zero(eltype(coilset)), event=nothing, saveat=[], N_traj=100, t_f=800, integrator=Tsit5())
+function construct_poincare(coilset, X₀, r₀=nothing; ζ₀=zero(eltype(coilset)), event=nothing, saveat=[], N_traj=100, t_f=800, integrator=Tsit5())
 
     # We will initialise about the point X₀
     x₀ = _initialise_fieldlines(X₀, r₀, N_traj)

@@ -1,7 +1,7 @@
 # Evaluating magnetic fields
 
 ```@docs
-Biot_Savart
+biot_savart
 ```
 
 
@@ -9,5 +9,5 @@ Biot_Savart
 ## Methods for computing B
 
 ```@docs
-CoilFields.Biot_Savart_CompactLinearSegment
+CoilFields.biot_savart_compactlinearsegment
 ```

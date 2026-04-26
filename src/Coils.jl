@@ -18,6 +18,6 @@ include("Coils/read_quasr.jl")
 export AbstractCoil, AbstractCoilGeometry, AbstractCoilSet
 export Coil, CoilSet, CompositeCoilSet
 
-export ReadCoilSet, GetCoilSet
+export readcoilset, getcoilset
 
 end

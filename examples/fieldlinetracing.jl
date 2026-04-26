@@ -1,7 +1,7 @@
 # # Field line tracing
 
 using CoilFields, GLMakie;
-coilset = ReadCoilSet("../../../test/coilset", skipstart=3);
+coilset = readcoilset("../../../test/coilset", skipstart=3);
 
 # Poincare section create currently only works on a single slice, multiple slices is too be implemented.
 #

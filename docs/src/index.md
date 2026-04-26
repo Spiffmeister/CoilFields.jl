@@ -10,7 +10,7 @@ julia> using CoilSet
 ## Reading in coil sets
 
 ```julia
-coilset = ReadCoilSet("test/coilset")
+coilset = readcoilset("test/coilset")
 ```
 
 
@@ -22,17 +22,17 @@ plotcoils(coilset)
 
 ## Computing the magnetic field
 
-The magnetic field can be evaluated by calling the `Biot_Savart` function,
+The magnetic field can be evaluated by calling the `biot_savart` function,
 
 ```julia
 pt = zeros(3)
-B = Biot_Savart(coilset, pt, CompactLinear)
+B = biot_savart(coilset, pt, CompactLinear)
 ```
 
-We can also evaluate at a number of points by handing a vector of points to the `Biot_Savart` function, note that we also export the in-place variants (called with the `!`).
+We can also evaluate at a number of points by handing a vector of points to the `biot_savart` function, note that we also export the in-place variants (called with the `!`).
 
 ```julia
 pts = [rand(3) for _ in 1:100]
 B = [zeros(3) for _ in eachindex(pts)]
-Biot_Savart!(B, coilset, pts, CompactLinear)
+biot_savart!(B, coilset, pts, CompactLinear)
 ```
