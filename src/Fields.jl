@@ -44,7 +44,7 @@ using some [`EvaluationMode`](@ref)
 function biot_savart end
 
 # Single point single coil
-function biot_savart(coil::Coil{TT,GEO}, X::Vector{TT}, ::CompactLinear) where {TT<:Real,GEO}
+function biot_savart(coil::Coil{TT,GEO}, X::AbstractVector{XT}, ::CompactLinear) where {TT<:Real, XT,GEO}
     B = mapreduce(i -> biot_savart_compactlinearsegment(coil[i], coil[i+1], X), +, 1:coil.length-1)
     Bfac = (coil.J * μ₀ / 4π)::TT
     Bscal = B * Bfac
