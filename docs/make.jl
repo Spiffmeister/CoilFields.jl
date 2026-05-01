@@ -31,6 +31,6 @@ makedocs(sitename="CoilFields",
     warnonly=Documenter.except(:linkcheck, :footnote)
 )
 
-# deploydocs(
-#     repo = "github.com/Spiffmeister/CoilFields.jl.git",
-# )
+deploydocs(
+    repo = "github.com/Spiffmeister/CoilFields.jl.git",
+)
