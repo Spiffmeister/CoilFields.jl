@@ -3,7 +3,8 @@ module CoilFields
 using LinearAlgebra: norm, cross, dot
 using OhMyThreads: tmap
 using StaticArrays
-using OrdinaryDiffEq: ODEProblem, solve, Tsit5, ContinuousCallback, EnsembleProblem, EnsembleThreads, remake, terminate!
+using DiffEqBase: EnsembleProblem, EnsembleThreads, terminate!
+using OrdinaryDiffEq: ODEProblem, solve, Tsit5, ContinuousCallback, remake
 using NonlinearSolve: NonlinearProblem, solve
 
 

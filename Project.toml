@@ -8,6 +8,7 @@ projects = ["docs"]
 
 [deps]
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+DiffEqBase = "2b5f629d-d688-5b77-993f-72d75c75574e"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -25,3 +26,4 @@ Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 plotting = "Makie"
 
 [compat]
+DiffEqBase = "6.218.0"
