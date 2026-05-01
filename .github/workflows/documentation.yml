@@ -22,13 +22,12 @@ jobs:
       - name: Install dependencies
         shell: julia --color=yes --project=docs {0}
         run: |
-          julia --project=/docs -e '
           using Pkg
           Pkg.add("Documenter")
           Pkg.add("Literate")
           Pkg.add("GLMakie")
           Pkg.develop(PackageSpec(path=pwd()))
-          Pkg.instantiate()'
+          Pkg.instantiate()
       - name: Build and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
