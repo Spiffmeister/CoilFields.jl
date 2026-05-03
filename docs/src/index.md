@@ -4,7 +4,7 @@ A package for doing things with coils for fusion plasmas.
 
 
 ```
-julia> using CoilSet
+julia> using CoilFields
 ```
 
 ## Reading in coil sets

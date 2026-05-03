@@ -8,21 +8,6 @@ using StaticArrays
 
 μ_0 = CoilFields.μ₀
 
-# Define a single magnetic coil
-
-
-
-
-
-
-
-# A = CoilFields.biot_savart_A(circular_coil, pts, CoilFields.CompactLinear())
-
-
-
-
-
-
 # Define the circular coil
 npts = 10_000
 J = 100.0
