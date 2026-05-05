@@ -1,6 +1,10 @@
 using CoilFields
 using Frames
 
+# For the quadratic flux minimising surfaces
+
+
+
 
 """
 Evaluate ``\\mathbf{B} \\cdot \\mathbf{n}`` at a point `q=(q¹,q²,q³)`

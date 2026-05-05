@@ -18,36 +18,68 @@ seriestype(::Fourier{TT,ST}) where {TT,ST} = ST
 const FourierCosineSeries{TT} = Fourier{TT,:cos}
 const FourierSineSeries{TT} = Fourier{TT,:sin}
 
-(ℱ::FourierCosineSeries{TT})(θ) where {TT} = mapreduce((i, a) -> a * cos((i - 1) * θ), +, enumerate(ℱ.amplitudes))
-(ℱ::FourierSineSeries{TT})(θ) where {TT} = mapreduce((i, a) -> a * sin(i * θ), +, enumerate(ℱ.amplitudes))
+(ℱ::FourierCosineSeries{TT})(θ) where {TT} = mapreduce(ia -> ia[2] * cos((ia[1] - 1) * θ), +, enumerate(ℱ.amplitudes))
+(ℱ::FourierSineSeries{TT})(θ) where {TT} = mapreduce(ia -> ia[2] * sin(ia[1] * θ), +, enumerate(ℱ.amplitudes))
 
 
-function derivative(ℱ::FourierCosineSeries{TT}, θ)
+function derivative(ℱ::FourierCosineSeries{TT}, θ) where {TT}
+    return -mapreduce(ia -> ia[2] * (ia[1] - 1) * sin((ia[1] - 1) * θ), +, enumerate(ℱ.amplitudes))
+end
+function derivative(ℱ::FourierSineSeries{TT}, θ) where {TT}
+    return mapreduce(ia -> ia[2] * ia[1] * cos(ia[1] * θ), +, enumerate(ℱ.amplitudes))
 end
 
 
+"""
+Fourier cosine or sine series object for 2D objects.
 
+Can be called with `ℱ(θ,ζ)`.
 
+`ℱ.amplitudes` is stored as a matrix where `m` are the rows and `n` are the columns.
+
+TODO: Implement m and n in a way which does not require storage maybe (can probably use a generator).
+"""
 struct Fourier2D{TT,STYPE} <: AbstractFourierSeries
     amplitudes::Matrix{TT} #m×n matrix
-    m::Vector{Int}
-    n::Vector{Int}
+    M::Matrix{Int}
+    N::Matrix{Int}
     N_fp::Int
+    function Fourier2D(stype, A, m_max, n_max, N_fp=1)
+        M = Matrix(transpose(repeat(0:m_max, 1, 2n_max + 1)))
+        N = repeat(-n_max:n_max, 1, m_max)
+        return new{eltype(A),stype}(A, M, N, N_fp)
+    end
 end
-function Fourier2D(A, m, n, N_fp=1)
+function Fourier2D(SType, Amn::Tuple, N_fp=1; m_max=0, n_max=0)
 
+    # If these are zero determine based on input
+    if iszero(m_max)
+        m_max = maximum(getindex.(Amn,2))
+    end
+    if iszero(n_max)
+        n_max = maximum(last.(Amn))
+    end
+
+    A = zeros(eltype(Amn[1][1]), m_max+1, n_max+1)
+    for (a,m,n) in Amn
+        A[m+1, n+1] = a
+    end
+
+    Fourier2D(SType, A, m_max, n_max, N_fp)
 end
+
+
 
 """
 Amplitudes are stored like `ℱ.amplitudes[i,j]` with rows≡`m` and cols≡`n`
 """
-getindex(ℱ::Fourier2D, I...) = ℱ.amplitudes[I]
+Base.getindex(ℱ::Fourier2D, I...) = ℱ.amplitudes[I]
 function setindex!(ℱ::Fourier2D, val, ind)
     ℱ.amplitudes[ind] = val
 end
 
-(ℱ::Fourier2D{TT,:cos})(θ, ζ) where {TT} = mapreduce(i -> ℱ.amplitudes[i] * cos(ℱ.m[i] * θ - ℱ.n[i] * ℱ.N_fp * ζ), +, eachindex(ℱ))
-(ℱ::Fourier2D{TT,:sin})(θ, ζ) where {TT} = mapreduce(i -> ℱ.amplitudes[i] * sin(TT(ℱ.m[i]) * θ - TT(ℱ.n[i]) * ℱ.N_fp * ζ), +, eachindex(ℱ))
+(ℱ::Fourier2D{TT,:cos})(θ, ζ) where {TT} = mapreduce(i -> ℱ.amplitudes[i] * cos(ℱ.M[i] * θ - ℱ.N[i] * ℱ.N_fp * ζ), +, eachindex(ℱ.amplitudes))
+(ℱ::Fourier2D{TT,:sin})(θ, ζ) where {TT} = mapreduce(i -> ℱ.amplitudes[i] * sin(TT(ℱ.M[i]) * θ - TT(ℱ.N[i]) * ℱ.N_fp * ζ), +, eachindex(ℱ.amplitudes))
 
 
 
