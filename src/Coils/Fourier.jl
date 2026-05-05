@@ -1,25 +1,55 @@
+abstract type AbstractFourierSeries end
+
 
 """
 Fourier cosine or sine series object
 
 `SType` is either `:cos` or `:sin` and will define the type of series to call.
 """
-struct Fourier{TT,SType}
+struct Fourier{TT,SType} <: AbstractFourierSeries
     amplitudes::Vector{TT}
     modes::Int
     Fourier(stype, amplitudes, m) = new{eltype(amplitudes),stype}(amplitudes, m)
 end
 
-const FourierCosineSeries{TT} = Fourier{TT,:cos}
-const FourierSineSeries{TT} = Fourier{TT,:sin}
-
-
 Base.eltype(::Fourier{TT}) where {TT} = TT
 seriestype(::Fourier{TT,ST}) where {TT,ST} = ST
 
+const FourierCosineSeries{TT} = Fourier{TT,:cos}
+const FourierSineSeries{TT} = Fourier{TT,:sin}
 
 (ℱ::FourierCosineSeries{TT})(θ) where {TT} = mapreduce((i, a) -> a * cos((i - 1) * θ), +, enumerate(ℱ.amplitudes))
 (ℱ::FourierSineSeries{TT})(θ) where {TT} = mapreduce((i, a) -> a * sin(i * θ), +, enumerate(ℱ.amplitudes))
+
+
+function derivative(ℱ::FourierCosineSeries{TT}, θ)
+end
+
+
+
+
+struct Fourier2D{TT,STYPE} <: AbstractFourierSeries
+    amplitudes::Matrix{TT} #m×n matrix
+    m::Vector{Int}
+    n::Vector{Int}
+    N_fp::Int
+end
+function Fourier2D(A, m, n, N_fp=1)
+
+end
+
+"""
+Amplitudes are stored like `ℱ.amplitudes[i,j]` with rows≡`m` and cols≡`n`
+"""
+getindex(ℱ::Fourier2D, I...) = ℱ.amplitudes[I]
+function setindex!(ℱ::Fourier2D, val, ind)
+    ℱ.amplitudes[ind] = val
+end
+
+(ℱ::Fourier2D{TT,:cos})(θ, ζ) where {TT} = mapreduce(i -> ℱ.amplitudes[i] * cos(ℱ.m[i] * θ - ℱ.n[i] * ℱ.N_fp * ζ), +, eachindex(ℱ))
+(ℱ::Fourier2D{TT,:sin})(θ, ζ) where {TT} = mapreduce(i -> ℱ.amplitudes[i] * sin(TT(ℱ.m[i]) * θ - TT(ℱ.n[i]) * ℱ.N_fp * ζ), +, eachindex(ℱ))
+
+
 
 
 
