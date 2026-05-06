@@ -8,8 +8,18 @@ Fourier cosine or sine series object
 """
 struct Fourier{TT,SType} <: AbstractFourierSeries
     amplitudes::Vector{TT}
-    modes::Int
-    Fourier(stype, amplitudes, m) = new{eltype(amplitudes),stype}(amplitudes, m)
+    modes::Vector{Int}
+
+    function Fourier(stype, amplitudes, m)
+        A = typeof(amplitudes) <: Real ? [amplitudes] : amplitudes
+        modes = typeof(m) <: Int ? [m] : m
+
+        if length(A) != length(modes)
+            throw(DimensionMismatch("length of amplitudes and modes must match."))
+        end
+
+        new{eltype(amplitudes),stype}(A, modes)
+    end
 end
 
 Base.eltype(::Fourier{TT}) where {TT} = TT
@@ -18,15 +28,15 @@ seriestype(::Fourier{TT,ST}) where {TT,ST} = ST
 const FourierCosineSeries{TT} = Fourier{TT,:cos}
 const FourierSineSeries{TT} = Fourier{TT,:sin}
 
-(ℱ::FourierCosineSeries{TT})(θ) where {TT} = mapreduce(ia -> ia[2] * cos((ia[1] - 1) * θ), +, enumerate(ℱ.amplitudes))
-(ℱ::FourierSineSeries{TT})(θ) where {TT} = mapreduce(ia -> ia[2] * sin(ia[1] * θ), +, enumerate(ℱ.amplitudes))
+(ℱ::FourierCosineSeries{TT})(θ) where {TT} = mapreduce(i -> ℱ.amplitudes[i] * cos((TT(ℱ.modes[i]) - 1) * θ), +, eachindex(ℱ.amplitudes))
+(ℱ::FourierSineSeries{TT})(θ) where {TT} = mapreduce(i -> ℱ.amplitudes[i] * sin(TT(ℱ.modes[i]) * θ), +, eachindex(ℱ.amplitudes))
 
 
 function derivative(ℱ::FourierCosineSeries{TT}, θ) where {TT}
-    return -mapreduce(ia -> ia[2] * (ia[1] - 1) * sin((ia[1] - 1) * θ), +, enumerate(ℱ.amplitudes))
+    return -mapreduce(i -> ℱ.amplitudes[i] * (TT(ℱ.modes[i]) - 1) * sin((TT(ℱ.modes[i]) - 1) * θ), +, eachindex(ℱ.amplitudes))
 end
 function derivative(ℱ::FourierSineSeries{TT}, θ) where {TT}
-    return mapreduce(ia -> ia[2] * ia[1] * cos(ia[1] * θ), +, enumerate(ℱ.amplitudes))
+    return mapreduce(i -> ℱ.amplitudes[i] * TT(ℱ.modes[i]) * cos(TT(ℱ.modes[i]) * θ), +, enumerate(ℱ.amplitudes))
 end
 
 
@@ -45,8 +55,8 @@ struct Fourier2D{TT,STYPE} <: AbstractFourierSeries
     N::Matrix{Int}
     N_fp::Int
     function Fourier2D(stype, A, m_max, n_max, N_fp=1)
-        M = Matrix(transpose(repeat(0:m_max, 1, 2n_max + 1)))
-        N = repeat(-n_max:n_max, 1, m_max)
+        M = repeat(0:m_max, 1, 2n_max + 1)
+        N = Matrix(transpose(repeat(-n_max:n_max, 1, size(M)[1])))
         return new{eltype(A),stype}(A, M, N, N_fp)
     end
 end
@@ -54,15 +64,15 @@ function Fourier2D(SType, Amn::Tuple, N_fp=1; m_max=0, n_max=0)
 
     # If these are zero determine based on input
     if iszero(m_max)
-        m_max = maximum(getindex.(Amn,2))
+        m_max = maximum(getindex.(Amn, 2))
     end
     if iszero(n_max)
         n_max = maximum(last.(Amn))
     end
 
-    A = zeros(eltype(Amn[1][1]), m_max+1, n_max+1)
-    for (a,m,n) in Amn
-        A[m+1, n+1] = a
+    A = zeros(eltype(Amn[1][1]), m_max + 1, 2n_max + 1)
+    for (a, m, n) in Amn
+        A[m+1, n+2n_max] = a
     end
 
     Fourier2D(SType, A, m_max, n_max, N_fp)
@@ -77,6 +87,7 @@ Base.getindex(ℱ::Fourier2D, I...) = ℱ.amplitudes[I]
 function setindex!(ℱ::Fourier2D, val, ind)
     ℱ.amplitudes[ind] = val
 end
+Base.size(ℱ::Fourier2D) = size(ℱ.amplitudes)
 
 (ℱ::Fourier2D{TT,:cos})(θ, ζ) where {TT} = mapreduce(i -> ℱ.amplitudes[i] * cos(ℱ.M[i] * θ - ℱ.N[i] * ℱ.N_fp * ζ), +, eachindex(ℱ.amplitudes))
 (ℱ::Fourier2D{TT,:sin})(θ, ζ) where {TT} = mapreduce(i -> ℱ.amplitudes[i] * sin(TT(ℱ.M[i]) * θ - TT(ℱ.N[i]) * ℱ.N_fp * ζ), +, eachindex(ℱ.amplitudes))
@@ -103,7 +114,12 @@ struct FourierSeries{TT,ST,CT}
         new{TT,seriestype(sine),seriestype(cosine)}(sine, cosine)
     end
 end
-
+function FourierSeries(SType, Amn::Tuple, N_fp=1; m_max=0, n_max=0)
+    X = Fourier2D(SType, Amn, N_fp, m_max=m_max, n_max=n_max)
+    return FourierSeries(X)
+end
+# function FourierSeries(;cos=)
+# end
 
 (ℱ::FourierSeries{TT,:sin,Nothing})(θ) where {TT} = ℱ.sin(θ)
 (ℱ::FourierSeries{TT,Nothing,:cos})(θ) where {TT} = ℱ.cos(θ)
@@ -113,15 +129,42 @@ end
 
 
 
+struct FourierCurve{TT,XT,YT,ZT}
+    x::XT
+    y::YT
+    z::ZT
+    FourierCurve(Fx, Fy, Fz) = new{typeof(Fx(0)),typeof(Fx),typeof(Fy),typeof(Fz)}(Fx, Fy, Fz)
+end
+function FourierCurve(; x=zero, y=zero, z=zero)
 
-struct FourierCurve{TT}
-    x::FourierSeries
-    y::FourierSeries
-    z::FourierSeries
-    FourierCurve(Fx, Fy, Fz) = new{Float64}(Fx, Fy, Fz)
+    return FourierCurve(x, y, z)
 end
 
-(ℱc::FourierCurve)(t) = ℱc.R(t), ℱc.Z(t)
+(ℱc::FourierCurve)(t) = ℱc.x(t), ℱc.y(t), ℱc.x(t)
+
+
+
+
+
+struct FourierSurface{TT,X1T,X2T}
+    X¹::X1T
+    X²::X2T
+
+    dim_X¹::Tuple{Int,Int} # marks the end of the X¹ array
+    dim_X²::Tuple{Int,Int} # marks the end of the X² array
+    FourierSurface(Fx, Fy) = new{Float64,typeof(Fx),typeof(Fy)}(Fx, Fy)
+end
+
+
+(ℱ::FourierSurface)(θ, ζ) = ℱ.X¹(θ, ζ), ℱ.X²(θ, ζ)
+
+# function Base.getindex(ℱ::FourierSurface, I...)
+# end
+
+
+# function Base.getindex(ℱ::FourierSurface)
+# end
+
 
 
 # _order_odd = struct oddorder() end

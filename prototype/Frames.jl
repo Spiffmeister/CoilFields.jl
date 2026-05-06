@@ -31,7 +31,10 @@ Apply the frame mapping
 ``h : (q^1, q^2, q^3) \\mapsto (x,y,z)``
 """
 function apply_frame(q::AbstractVector, frame::GFrame)
-    return frame.X₀(q[3]) + q[1] * frame.N(q[3]) + q[2] * frame.B(q[3])
+    x = frame.X₀(q[3])
+    n = frame.N(q[3])
+    b = frame.B(q[3])
+    return @. x + q[1] * n + q[2] * b
 end
 
 
