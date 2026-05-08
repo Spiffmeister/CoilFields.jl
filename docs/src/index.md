@@ -10,7 +10,7 @@ julia> using CoilFields
 ## Reading in coil sets
 
 ```julia
-coilset = readcoilset("test/coilset")
+coilset = readcoilset("test/coilset", skipstart=3)
 ```
 
 
